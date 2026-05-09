@@ -1,0 +1,71 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  fetcher-caiso:
+    build:
+      context: ./services/fetcher
+    environment:
+      REGION: CAISO
+      REDIS_URL: redis://redis:6379
+      GRIDSTATUS_API_KEY: ${GRIDSTATUS_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-30000}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  fetcher-ercot:
+    build:
+      context: ./services/fetcher
+    environment:
+      REGION: ERCOT
+      REDIS_URL: redis://redis:6379
+      GRIDSTATUS_API_KEY: ${GRIDSTATUS_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-30000}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  fetcher-pjm:
+    build:
+      context: ./services/fetcher
+    environment:
+      REGION: PJM
+      REDIS_URL: redis://redis:6379
+      GRIDSTATUS_API_KEY: ${GRIDSTATUS_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-30000}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  aggregator:
+    build:
+      context: ./services/aggregator
+    ports:
+      - '3000:3000'
+    environment:
+      REDIS_URL: redis://redis:6379
+      PORT: 3000
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./services/dashboard
+    ports:
+      - '8080:80'
+    depends_on:
+      - aggregator
+    restart: unless-stopped
