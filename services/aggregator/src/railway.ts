@@ -13,10 +13,15 @@ const REGIONS = [
   'BPAT', 'TVA', 'SOCO', 'FPL', 'DUK', 'SRP', 'PSCO', 'PACE',
 ] as const;
 
-const PORT = parseInt(process.env.PORT ?? '3000', 10);
+function listenPort(): number {
+  const n = parseInt(process.env.PORT ?? '', 10);
+  return Number.isFinite(n) && n > 0 ? n : 3000;
+}
+
+const PORT = listenPort();
 // Containers must listen on all interfaces; localhost-only breaks Railway healthchecks.
 const HOST = process.env.HOST ?? '0.0.0.0';
-const EIA_API_KEY = process.env.EIA_API_KEY;
+const EIA_API_KEY = process.env.EIA_API_KEY?.trim();
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL ?? '1200000');
 const BACKFILL_HOURS = parseInt(process.env.BACKFILL_HOURS ?? '48');
 const STAGGER_MS = parseInt(process.env.EIA_STAGGER_MS ?? '300');
@@ -67,6 +72,7 @@ async function pollRegion(region: string): Promise<void> {
 }
 
 async function runBackfillAll(): Promise<void> {
+  if (!EIA_API_KEY) return;
   for (const region of REGIONS) {
     await backfillRegion(region);
     await sleep(STAGGER_MS);
@@ -74,6 +80,7 @@ async function runBackfillAll(): Promise<void> {
 }
 
 async function runPollAll(): Promise<void> {
+  if (!EIA_API_KEY) return;
   for (const region of REGIONS) {
     await pollRegion(region);
     await sleep(STAGGER_MS);
@@ -81,21 +88,24 @@ async function runPollAll(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  if (!EIA_API_KEY) {
-    console.error('EIA_API_KEY is required (Railway variable or .env)');
-    process.exit(1);
-  }
-
   const staticRoot = process.env.SERVE_STATIC === '0' ? undefined : STATIC_DIR;
   const app = createApp(staticRoot);
 
   await new Promise<void>((resolve, reject) => {
     const server = app.listen(PORT, HOST, () => {
-      console.log(`Railway app listening on ${HOST}:${PORT} static=${staticRoot ?? '(api only)'}`);
+      console.log(
+        `[railway] listening host=${HOST} port=${PORT} (PORT env=${process.env.PORT ?? '(unset)'}) static=${staticRoot ?? '(api only)'}`
+      );
       resolve();
     });
     server.on('error', reject);
   });
+
+  if (!EIA_API_KEY) {
+    console.error(
+      '[railway] EIA_API_KEY is not set — add it under Railway Variables or polling stays disabled.'
+    );
+  }
 
   try {
     await db.init();
@@ -108,11 +118,15 @@ async function main(): Promise<void> {
   }
 
   void (async () => {
-    await runBackfillAll();
-    await runPollAll();
-    setInterval(() => {
-      void runPollAll();
-    }, POLL_INTERVAL);
+    try {
+      await runBackfillAll();
+      await runPollAll();
+      setInterval(() => {
+        void runPollAll();
+      }, POLL_INTERVAL);
+    } catch (err) {
+      console.error('[railway] poll loop error:', (err as Error).message);
+    }
   })();
 }
 

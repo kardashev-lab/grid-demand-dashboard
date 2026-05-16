@@ -24,7 +24,11 @@ docker compose up --build
 
 ## Deploy on Railway
 
-Connect this repo in Railway, add **`EIA_API_KEY`**. Build uses **`railway.toml`** + **`Dockerfile.railway`** (single container: UI + API + in-process polling). Optional **`DATABASE_URL`** if you attach Postgres.
+Connect this repo in Railway. **`railway.toml`** targets **`Dockerfile.railway`** and probes **`/health`**.
+
+Required for live data: **`EIA_API_KEY`**. If it’s missing, the service still starts so deploy healthchecks pass—add the key under Variables.
+
+Optional **`DATABASE_URL`** when you attach Railway Postgres.
 
 ---
 

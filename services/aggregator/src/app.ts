@@ -10,8 +10,19 @@ export function createApp(staticDir?: string) {
   app.use(cors());
   app.use(express.json());
 
+  // Lightweight path for platform probes (Railway). Keeps checks off /api/* and SPA fallbacks.
+  app.get('/health', (_req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+  app.head('/health', (_req, res) => {
+    res.status(200).end();
+  });
+
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+  app.head('/api/health', (_req, res) => {
+    res.status(200).end();
   });
 
   app.get('/api/demand', (_req, res) => {

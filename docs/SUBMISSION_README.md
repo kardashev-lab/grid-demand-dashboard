@@ -82,7 +82,7 @@ One container: Express serves `/api/*` and the built React app on `/`. EIA is po
 3. `railway.toml` points the build at **`Dockerfile.railway`**; Railway sets **`PORT`** automatically.
 4. Optional: add **Railway Postgres** and set **`DATABASE_URL`** so readings persist across restarts (same schema as Docker Compose).
 
-Health check: `GET /api/health`. Logs show `[railway]` lines while backfill and polls run.
+Health check: `GET /health` (Railway) or `GET /api/health`. Logs show `[railway]` lines while backfill and polls run.
 
 ### Kubernetes (GKE)
 
