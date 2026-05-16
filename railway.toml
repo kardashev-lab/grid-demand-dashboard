@@ -1,0 +1,8 @@
+# Single-service deploy: see Dockerfile.railway and README "Railway".
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.railway"
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 180

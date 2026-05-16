@@ -1,0 +1,31 @@
+# Minimal single-container deploy for Railway: Express API + static dashboard +
+# in-process EIA polling for all regions. No Redis or fetcher fleet.
+
+FROM node:20-bookworm-slim AS dashboard-build
+WORKDIR /src/dashboard
+COPY services/dashboard/package*.json ./
+RUN npm ci
+COPY services/dashboard/ ./
+RUN npm run build
+
+FROM node:20-bookworm-slim AS aggregator-build
+WORKDIR /src/aggregator
+COPY services/aggregator/package*.json ./
+RUN npm ci
+COPY services/aggregator/ ./
+RUN npm run build
+
+FROM node:20-bookworm-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY services/aggregator/package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=aggregator-build /src/aggregator/dist ./dist
+COPY --from=dashboard-build /src/dashboard/dist ./public
+
+ENV STATIC_DIR=/app/public
+EXPOSE 3000
+
+CMD ["node", "dist/railway.js"]

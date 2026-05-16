@@ -1,10 +1,11 @@
 // express app, kept separate from index.ts so tests don't start a server
 
+import path from 'path';
 import express from 'express';
 import cors from 'cors';
 import { getLatest, getHistory } from './store';
 
-export function createApp() {
+export function createApp(staticDir?: string) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -30,6 +31,15 @@ export function createApp() {
     }
     res.json(latest[region]);
   });
+
+  if (staticDir) {
+    const root = path.resolve(staticDir);
+    app.use(express.static(root));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) return next();
+      res.sendFile(path.join(root, 'index.html'), (err) => next(err));
+    });
+  }
 
   return app;
 }
