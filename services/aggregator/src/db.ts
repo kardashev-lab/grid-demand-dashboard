@@ -16,13 +16,12 @@ export async function init(): Promise<void> {
     return;
   }
 
-  pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
-  pool.on('error', (err) => console.error('Postgres pool error:', err.message));
+  const url = process.env.DATABASE_URL;
+  const provisional = new Pool({ connectionString: url, max: 5 });
+  provisional.on('error', (err) => console.error('Postgres pool error:', err.message));
 
-  // one row per region per hour. hour_bucket is computed app-side because
-  // postgres rejects to_char(timestamptz) in a STORED generated column
-  // (the function isn't IMMUTABLE).
-  await pool.query(`
+  try {
+    await provisional.query(`
     CREATE TABLE IF NOT EXISTS demand (
       region TEXT NOT NULL,
       ts TIMESTAMPTZ NOT NULL,
@@ -32,9 +31,15 @@ export async function init(): Promise<void> {
       PRIMARY KEY (region, hour_bucket)
     );
   `);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_demand_region_ts ON demand(region, ts DESC);`);
+    await provisional.query(`CREATE INDEX IF NOT EXISTS idx_demand_region_ts ON demand(region, ts DESC);`);
 
-  console.log('Postgres connected, schema ready');
+    pool = provisional;
+    console.log('Postgres connected, schema ready');
+  } catch (err) {
+    await provisional.end().catch(() => {});
+    pool = null;
+    throw err;
+  }
 }
 
 // "2026-05-09T10:42:13Z" -> "2026-05-09T10"

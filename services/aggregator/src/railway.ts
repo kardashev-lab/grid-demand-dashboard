@@ -13,7 +13,9 @@ const REGIONS = [
   'BPAT', 'TVA', 'SOCO', 'FPL', 'DUK', 'SRP', 'PSCO', 'PACE',
 ] as const;
 
-const PORT = parseInt(process.env.PORT ?? '3000');
+const PORT = parseInt(process.env.PORT ?? '3000', 10);
+// Containers must listen on all interfaces; localhost-only breaks Railway healthchecks.
+const HOST = process.env.HOST ?? '0.0.0.0';
 const EIA_API_KEY = process.env.EIA_API_KEY;
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL ?? '1200000');
 const BACKFILL_HOURS = parseInt(process.env.BACKFILL_HOURS ?? '48');
@@ -84,18 +86,26 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  await db.init();
-  if (db.isEnabled()) {
-    const history = await db.loadHistory(48);
-    hydrate(history);
-  }
-
   const staticRoot = process.env.SERVE_STATIC === '0' ? undefined : STATIC_DIR;
   const app = createApp(staticRoot);
 
-  app.listen(PORT, () => {
-    console.log(`Railway app listening on :${PORT} static=${staticRoot ?? '(api only)'}`);
+  await new Promise<void>((resolve, reject) => {
+    const server = app.listen(PORT, HOST, () => {
+      console.log(`Railway app listening on ${HOST}:${PORT} static=${staticRoot ?? '(api only)'}`);
+      resolve();
+    });
+    server.on('error', reject);
   });
+
+  try {
+    await db.init();
+    if (db.isEnabled()) {
+      const history = await db.loadHistory(48);
+      hydrate(history);
+    }
+  } catch (err) {
+    console.error('Postgres unavailable, continuing in-memory only:', (err as Error).message);
+  }
 
   void (async () => {
     await runBackfillAll();
