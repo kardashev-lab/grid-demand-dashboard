@@ -1,5 +1,4 @@
-// Integration tests for the aggregator API using Jest + Supertest.
-// We seed the store directly so no Redis connection is needed.
+// API tests, seeded via updateDemand directly so no Redis needed
 
 import request from 'supertest';
 import { createApp } from '../app';

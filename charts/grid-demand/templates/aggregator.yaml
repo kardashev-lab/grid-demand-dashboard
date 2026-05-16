@@ -1,0 +1,69 @@
+# aggregator consumes the Redis stream and serves the REST API for the dashboard
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aggregator
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "grid-demand.labels" . | nindent 4 }}
+    app: aggregator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aggregator
+  template:
+    metadata:
+      labels:
+        {{- include "grid-demand.labels" . | nindent 8 }}
+        app: aggregator
+    spec:
+      containers:
+        - name: aggregator
+          image: {{ include "grid-demand.image" (dict "ctx" . "name" .Values.image.aggregator) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.aggregator.port }}
+          env:
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: PORT
+              value: {{ .Values.aggregator.port | quote }}
+            # postgres is optional — without it, history only lives in-memory
+            {{- if .Values.postgres.enabled }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: DATABASE_URL
+            {{- end }}
+          # ready once /api/health responds — k8s won't route traffic until then
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.aggregator.port }}
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.aggregator.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.aggregator.resources | nindent 12 }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aggregator
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "grid-demand.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: aggregator
+  ports:
+    - port: {{ .Values.aggregator.port }}
+      targetPort: {{ .Values.aggregator.port }}

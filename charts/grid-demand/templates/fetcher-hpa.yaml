@@ -1,0 +1,29 @@
+# per-region HPA for fetchers — unlikely to trigger under normal EIA polling but
+# protects against runaway backfill or burst retries eating all the CPU
+{{- if .Values.fetcherHpa.enabled }}
+{{- range $region := .Values.fetcher.regions }}
+{{- $regionLower := lower $region }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fetcher-{{ $regionLower }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "grid-demand.labels" $ | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fetcher-{{ $regionLower }}
+  minReplicas: {{ $.Values.fetcherHpa.minReplicas }}
+  maxReplicas: {{ $.Values.fetcherHpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $.Values.fetcherHpa.targetCPUUtilizationPercentage }}
+{{- end }}
+{{- end }}

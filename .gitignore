@@ -1,3 +1,19 @@
 .env
 node_modules/
 dist/
+.DS_Store
+experiments/
+
+# Course write-up assets (docx, screenshots, local npm); not needed to run the stack
+report/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs / caches
+*.log
+.npm/
+.cache/

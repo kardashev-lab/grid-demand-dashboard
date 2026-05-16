@@ -1,4 +1,4 @@
-// Express app split out from index.ts so we can import it in tests without starting a real server
+// express app, kept separate from index.ts so tests don't start a server
 
 import express from 'express';
 import cors from 'cors';
@@ -21,7 +21,6 @@ export function createApp() {
     res.json(getHistory());
   });
 
-  // The region param comes in lowercase sometimes so we normalize it
   app.get('/api/demand/:region', (req, res) => {
     const region = req.params.region.toUpperCase();
     const latest = getLatest();

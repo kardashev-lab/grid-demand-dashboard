@@ -1,3 +1,11 @@
+x-fetcher-base: &fetcher-base
+  build:
+    context: ./services/fetcher
+  depends_on:
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+
 services:
   redis:
     image: redis:7-alpine
@@ -9,44 +17,141 @@ services:
       timeout: 3s
       retries: 10
 
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: griddemand
+      POSTGRES_USER: griddemand
+      POSTGRES_PASSWORD: griddemand
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U griddemand -d griddemand']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   fetcher-caiso:
-    build:
-      context: ./services/fetcher
+    <<: *fetcher-base
     environment:
       REGION: CAISO
       REDIS_URL: redis://redis:6379
-      GRIDSTATUS_API_KEY: ${GRIDSTATUS_API_KEY:-}
-      POLL_INTERVAL: ${POLL_INTERVAL:-30000}
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-ercot:
-    build:
-      context: ./services/fetcher
+    <<: *fetcher-base
     environment:
       REGION: ERCOT
       REDIS_URL: redis://redis:6379
-      GRIDSTATUS_API_KEY: ${GRIDSTATUS_API_KEY:-}
-      POLL_INTERVAL: ${POLL_INTERVAL:-30000}
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-pjm:
-    build:
-      context: ./services/fetcher
+    <<: *fetcher-base
     environment:
       REGION: PJM
       REDIS_URL: redis://redis:6379
-      GRIDSTATUS_API_KEY: ${GRIDSTATUS_API_KEY:-}
-      POLL_INTERVAL: ${POLL_INTERVAL:-30000}
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-miso:
+    <<: *fetcher-base
+    environment:
+      REGION: MISO
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-nyiso:
+    <<: *fetcher-base
+    environment:
+      REGION: NYISO
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-isone:
+    <<: *fetcher-base
+    environment:
+      REGION: ISONE
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-spp:
+    <<: *fetcher-base
+    environment:
+      REGION: SPP
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-bpat:
+    <<: *fetcher-base
+    environment:
+      REGION: BPAT
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-tva:
+    <<: *fetcher-base
+    environment:
+      REGION: TVA
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-soco:
+    <<: *fetcher-base
+    environment:
+      REGION: SOCO
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-fpl:
+    <<: *fetcher-base
+    environment:
+      REGION: FPL
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-duk:
+    <<: *fetcher-base
+    environment:
+      REGION: DUK
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-srp:
+    <<: *fetcher-base
+    environment:
+      REGION: SRP
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-psco:
+    <<: *fetcher-base
+    environment:
+      REGION: PSCO
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
+
+  fetcher-pace:
+    <<: *fetcher-base
+    environment:
+      REGION: PACE
+      REDIS_URL: redis://redis:6379
+      EIA_API_KEY: ${EIA_API_KEY:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   aggregator:
     build:
@@ -55,9 +160,12 @@ services:
       - '3000:3000'
     environment:
       REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://griddemand:griddemand@postgres:5432/griddemand
       PORT: 3000
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     restart: unless-stopped
 
@@ -69,3 +177,6 @@ services:
     depends_on:
       - aggregator
     restart: unless-stopped
+
+volumes:
+  pgdata:

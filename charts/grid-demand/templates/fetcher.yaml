@@ -1,0 +1,46 @@
+# one deployment per region — each fetcher polls EIA independently so rate limits don't block other BAs
+{{- range $region := .Values.fetcher.regions }}
+{{- $regionLower := lower $region }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fetcher-{{ $regionLower }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "grid-demand.labels" $ | nindent 4 }}
+    app: fetcher
+    region: {{ $regionLower }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fetcher
+      region: {{ $regionLower }}
+  template:
+    metadata:
+      labels:
+        {{- include "grid-demand.labels" $ | nindent 8 }}
+        app: fetcher
+        region: {{ $regionLower }}
+    spec:
+      containers:
+        - name: fetcher
+          image: {{ include "grid-demand.image" (dict "ctx" $ "name" $.Values.image.fetcher) }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          env:
+            - name: REGION
+              value: {{ $region | quote }}
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: POLL_INTERVAL
+              value: {{ $.Values.fetcher.pollIntervalMs | quote }}
+            # shared API key across all fetcher pods — EIA doesn't scope keys per region
+            - name: EIA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.secret.name }}
+                  key: {{ $.Values.secret.key }}
+          resources:
+            {{- toYaml $.Values.fetcher.resources | nindent 12 }}
+{{- end }}

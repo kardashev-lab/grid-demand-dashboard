@@ -1,9 +1,9 @@
-// Redis Streams consumer for the aggregator.
-// Uses XREADGROUP so we can track which messages were processed — if the aggregator
-// crashes, it replays unacknowledged messages on restart instead of losing them.
+// redis streams consumer. Uses XREADGROUP so unacked messages are replayed
+// on restart - that's how we recover state without losing readings.
 
 import Redis from 'ioredis';
 import { updateDemand, DemandReading } from './store';
+import { insertReading } from './db';
 
 const STREAM_KEY = 'demand';
 const GROUP = 'aggregators';
@@ -15,30 +15,27 @@ export async function startConsumer(redisUrl: string): Promise<void> {
   await redis.connect();
 
   try {
-    // MKSTREAM creates the stream if it doesn't exist yet
     await redis.xgroup('CREATE', STREAM_KEY, GROUP, '0', 'MKSTREAM');
     console.log('Consumer group created');
   } catch (err: unknown) {
-    // BUSYGROUP means the group already exists, which is fine on restart
+    // BUSYGROUP just means group already exists
     if (!(err instanceof Error) || !err.message.includes('BUSYGROUP')) throw err;
   }
 
   console.log('Consumer ready, waiting for messages...');
 
-  // Handle any messages that were delivered before the last restart
   await drainPending(redis);
 
-  // Main loop, blocks up to 5 seconds waiting for new messages
   while (true) {
     try {
       const results = (await redis.xreadgroup(
         'GROUP', GROUP, CONSUMER,
         'COUNT', '10',
         'BLOCK', '5000',
-        'STREAMS', STREAM_KEY, '>'  // '>' means only new, undelivered messages
+        'STREAMS', STREAM_KEY, '>'
       )) as [string, [string, string[]][]][] | null;
 
-      if (!results) continue; // timeout, just loop again
+      if (!results) continue;
 
       for (const [, messages] of results) {
         for (const [id, fields] of messages) {
@@ -50,7 +47,7 @@ export async function startConsumer(redisUrl: string): Promise<void> {
             timestamp: data.timestamp,
           };
           updateDemand(reading);
-          // XACK tells Redis we've processed this message so it leaves the pending list
+          await insertReading(reading);
           await redis.xack(STREAM_KEY, GROUP, id);
           console.log(`Consumed [${reading.region}] ${reading.value} ${reading.unit}`);
         }
@@ -62,13 +59,11 @@ export async function startConsumer(redisUrl: string): Promise<void> {
   }
 }
 
-// On restart, replay any messages we received but didn't acknowledge before going down.
-// This is how we recover state without needing a separate database.
 async function drainPending(redis: Redis): Promise<void> {
   const pending = (await redis.xreadgroup(
     'GROUP', GROUP, CONSUMER,
     'COUNT', '100',
-    'STREAMS', STREAM_KEY, '0'  // '0' means give me my own pending messages
+    'STREAMS', STREAM_KEY, '0'
   )) as [string, [string, string[]][]][] | null;
 
   if (!pending) return;
@@ -77,12 +72,14 @@ async function drainPending(redis: Redis): Promise<void> {
   for (const [, messages] of pending) {
     for (const [id, fields] of messages) {
       const data = fieldsToMap(fields);
-      updateDemand({
+      const reading: DemandReading = {
         region: data.region,
         value: parseFloat(data.value),
         unit: data.unit,
         timestamp: data.timestamp,
-      });
+      };
+      updateDemand(reading);
+      await insertReading(reading);
       await redis.xack(STREAM_KEY, GROUP, id);
       count++;
     }
@@ -90,13 +87,9 @@ async function drainPending(redis: Redis): Promise<void> {
   if (count > 0) console.log(`Replayed ${count} pending messages from before restart`);
 }
 
-// Redis returns fields as a flat array ["key1", "val1", "key2", "val2", ...]
-// This converts it to a regular object
 function fieldsToMap(fields: string[]): Record<string, string> {
   const map: Record<string, string> = {};
-  for (let i = 0; i < fields.length; i += 2) {
-    map[fields[i]] = fields[i + 1];
-  }
+  for (let i = 0; i < fields.length; i += 2) map[fields[i]] = fields[i + 1];
   return map;
 }
 

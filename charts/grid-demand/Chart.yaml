@@ -1,0 +1,6 @@
+apiVersion: v2
+name: grid-demand
+description: Real-time electricity demand dashboard (CAISO/ERCOT/PJM) with HPA on the aggregator.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

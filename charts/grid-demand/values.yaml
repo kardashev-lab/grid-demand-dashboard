@@ -1,0 +1,117 @@
+# defaults for grid-demand. override with --set or -f my-values.yaml
+
+namespace: grid-demand
+createNamespace: true
+
+image:
+  registry: ashuftw
+  pullPolicy: Always
+  tag: latest
+  fetcher: grid-demand-fetcher
+  aggregator: grid-demand-aggregator
+  dashboard: grid-demand-dashboard
+
+# EIA API key (https://api.eia.gov/register/)
+eiaApiKey: ""
+secret:
+  create: true
+  name: eia-api
+  key: EIA_API_KEY
+
+redis:
+  image: redis:7-alpine
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  db: griddemand
+  user: griddemand
+  password: griddemand
+  storage: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+fetcher:
+  # 20 minutes — EIA only updates hourly so anything faster just burns rate limit
+  pollIntervalMs: "1200000"
+  # 7 ISOs/RTOs + 8 non-ISO BAs
+  regions:
+    - CAISO
+    - ERCOT
+    - PJM
+    - MISO
+    - NYISO
+    - ISONE
+    - SPP
+    - BPAT
+    - TVA
+    - SOCO
+    - FPL
+    - DUK
+    - SRP
+    - PSCO
+    - PACE
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+aggregator:
+  port: 3000
+  # cpu request is required — HPA computes utilization as (actual / request)
+  resources:
+    requests:
+      cpu: 100m
+      memory: 96Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+dashboard:
+  service:
+    type: LoadBalancer
+    port: 80
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 60
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 50
+  scaleUp:
+    stabilizationWindowSeconds: 30
+  scaleDown:
+    stabilizationWindowSeconds: 120
+
+# per-region HPA on each fetcher (proposal listed fetchers as scaling target)
+fetcherHpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70

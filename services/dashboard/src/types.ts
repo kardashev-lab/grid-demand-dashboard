@@ -1,3 +1,5 @@
+// shared frontend types. mirrors the shape returned by the aggregator API.
+
 export interface DemandReading {
   region: string;
   value: number;
