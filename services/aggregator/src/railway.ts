@@ -1,12 +1,10 @@
-// Single-process entry for Railway: poll EIA for all regions in-process, optional
-// Postgres, serve API + built React dashboard. No Redis or separate fetchers.
+// Single-process entry for Railway: poll kardashev-data for all regions in-process,
+// serve API + built React dashboard. No Redis, no fetcher fleet, no EIA key needed.
 
 import path from 'path';
-import axios from 'axios';
 import { createApp } from './app';
 import * as db from './db';
 import { hydrate, updateDemand, type DemandReading } from './store';
-import { fetchDemand, fetchHistory } from './eiaClient';
 
 const REGIONS = [
   'CAISO', 'ERCOT', 'PJM', 'MISO', 'NYISO', 'ISONE', 'SPP',
@@ -19,72 +17,72 @@ function listenPort(): number {
 }
 
 const PORT = listenPort();
-// Containers must listen on all interfaces; localhost-only breaks Railway healthchecks.
 const HOST = process.env.HOST ?? '0.0.0.0';
-const EIA_API_KEY = process.env.EIA_API_KEY?.trim();
+const KARDASHEV_API = process.env.KARDASHEV_API_URL ?? 'https://data.kardashevlabs.org';
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL ?? '1200000');
 const BACKFILL_HOURS = parseInt(process.env.BACKFILL_HOURS ?? '48');
-const STAGGER_MS = parseInt(process.env.EIA_STAGGER_MS ?? '300');
-
 const STATIC_DIR = process.env.STATIC_DIR ?? path.join(__dirname, '..', '..', 'dashboard', 'dist');
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-async function applyReading(reading: DemandReading): Promise<void> {
-  updateDemand(reading);
-  await db.insertReading(reading);
+interface LoadPoint {
+  ts: string;
+  iso: string;
+  zone: string;
+  mw_actual: number | null;
+  mw_forecast: number | null;
 }
 
-async function backfillRegion(region: string): Promise<void> {
-  try {
-    const rows = await fetchHistory(region, EIA_API_KEY!, BACKFILL_HOURS);
-    for (const row of rows) {
-      await applyReading({
-        region,
-        value: row.value,
-        unit: 'MW',
-        timestamp: row.timestamp,
-      });
-    }
-    console.log(`[railway] Backfilled ${region}: ${rows.length} buckets`);
-  } catch (err) {
-    if (axios.isAxiosError(err) && err.response?.status === 429) {
-      console.warn(`[railway] Backfill ${region}: rate limited, skipping`);
-      return;
-    }
-    console.error(`[railway] Backfill ${region}:`, (err as Error).message);
-  }
+async function fetchRegion(iso: string, hours: number): Promise<LoadPoint[]> {
+  const url = `${KARDASHEV_API}/load?iso=${iso}&hours=${hours}&limit=${hours + 5}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${iso}`);
+  return res.json() as Promise<LoadPoint[]>;
 }
 
-async function pollRegion(region: string): Promise<void> {
-  try {
-    const value = await fetchDemand(region, EIA_API_KEY!);
-    const timestamp = new Date().toISOString();
-    await applyReading({ region, value, unit: 'MW', timestamp });
-    console.log(`[railway] ${region} ${value} MW`);
-  } catch (err) {
-    if (axios.isAxiosError(err) && err.response?.status === 429) {
-      console.warn(`[railway] ${region}: rate limited`);
-      return;
-    }
-    console.error(`[railway] ${region}:`, (err as Error).message);
-  }
+function toReadings(iso: string, rows: LoadPoint[]): DemandReading[] {
+  return rows
+    .filter((r) => r.mw_actual && r.mw_actual > 0)
+    .map((r) => ({
+      region: iso,
+      value: Math.round(r.mw_actual!),
+      unit: 'MW',
+      timestamp: new Date(r.ts).toISOString(),
+    }))
+    .reverse(); // kardashev returns DESC; store expects ASC
 }
 
-async function runBackfillAll(): Promise<void> {
-  if (!EIA_API_KEY) return;
-  for (const region of REGIONS) {
-    await backfillRegion(region);
-    await sleep(STAGGER_MS);
-  }
+async function backfillAll(): Promise<void> {
+  const byRegion: Record<string, DemandReading[]> = {};
+  await Promise.allSettled(
+    REGIONS.map(async (iso) => {
+      try {
+        const rows = await fetchRegion(iso, BACKFILL_HOURS);
+        byRegion[iso] = toReadings(iso, rows);
+        console.log(`[railway] Backfilled ${iso}: ${byRegion[iso].length} rows`);
+      } catch (err) {
+        console.error(`[railway] Backfill ${iso}:`, (err as Error).message);
+      }
+    })
+  );
+  if (Object.keys(byRegion).length > 0) hydrate(byRegion);
 }
 
-async function runPollAll(): Promise<void> {
-  if (!EIA_API_KEY) return;
-  for (const region of REGIONS) {
-    await pollRegion(region);
-    await sleep(STAGGER_MS);
-  }
+async function pollAll(): Promise<void> {
+  await Promise.allSettled(
+    REGIONS.map(async (iso) => {
+      try {
+        const rows = await fetchRegion(iso, 3);
+        const readings = toReadings(iso, rows);
+        if (readings.length > 0) {
+          const latest = readings[readings.length - 1];
+          updateDemand(latest);
+          await db.insertReading(latest);
+          console.log(`[railway] ${iso} ${latest.value} MW`);
+        }
+      } catch (err) {
+        console.error(`[railway] ${iso}:`, (err as Error).message);
+      }
+    })
+  );
 }
 
 async function main(): Promise<void> {
@@ -94,18 +92,12 @@ async function main(): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const server = app.listen(PORT, HOST, () => {
       console.log(
-        `[railway] listening host=${HOST} port=${PORT} (PORT env=${process.env.PORT ?? '(unset)'}) static=${staticRoot ?? '(api only)'}`
+        `[railway] listening host=${HOST} port=${PORT} static=${staticRoot ?? '(api only)'}`
       );
       resolve();
     });
     server.on('error', reject);
   });
-
-  if (!EIA_API_KEY) {
-    console.error(
-      '[railway] EIA_API_KEY is not set — add it under Railway Variables or polling stays disabled.'
-    );
-  }
 
   try {
     await db.init();
@@ -117,13 +109,11 @@ async function main(): Promise<void> {
     console.error('Postgres unavailable, continuing in-memory only:', (err as Error).message);
   }
 
+  // backfill history then keep polling
   void (async () => {
     try {
-      await runBackfillAll();
-      await runPollAll();
-      setInterval(() => {
-        void runPollAll();
-      }, POLL_INTERVAL);
+      await backfillAll();
+      setInterval(() => { void pollAll(); }, POLL_INTERVAL);
     } catch (err) {
       console.error('[railway] poll loop error:', (err as Error).message);
     }
