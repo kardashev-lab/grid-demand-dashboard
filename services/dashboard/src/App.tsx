@@ -10,8 +10,8 @@ import { GridHero } from './components/GridHero';
 import { DemandMap, HistoryMap } from './types';
 import './index.css';
 
-// 10 minutes between polls — EIA only updates hourly so no point hammering it
-const POLL_MS = 600_000;
+// 5-minute poll — CAISO/ERCOT/MISO/NYISO now publish 5-min native data
+const POLL_MS = 300_000;
 
 export default function App() {
   const [demand, setDemand] = useState<DemandMap>({});
@@ -130,7 +130,7 @@ export default function App() {
                   <h2>Trends</h2>
                   <p className="panel-sub">
                     {trendRegions.length > 0
-                      ? `Hourly · ${trendRegions.join(' · ')}`
+                      ? `5-min · ${trendRegions.join(' · ')}`
                       : 'Awaiting data…'}
                   </p>
                 </div>

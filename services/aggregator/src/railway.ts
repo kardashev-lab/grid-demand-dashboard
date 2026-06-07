@@ -32,7 +32,9 @@ interface LoadPoint {
 }
 
 async function fetchRegion(iso: string, hours: number): Promise<LoadPoint[]> {
-  const url = `${KARDASHEV_API}/load?iso=${iso}&hours=${hours}&limit=${hours + 5}`;
+  // limit = hours * 15 to handle 5-min resolution (12 per hour + headroom)
+  const limit = hours * 15;
+  const url = `${KARDASHEV_API}/load?iso=${iso}&hours=${hours}&limit=${limit}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${iso}`);
   return res.json() as Promise<LoadPoint[]>;
