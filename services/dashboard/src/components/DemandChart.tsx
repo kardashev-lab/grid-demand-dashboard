@@ -67,25 +67,25 @@ export function DemandChart({ history, regions }: Props) {
     <div className="chart-wrap">
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
           <XAxis
             dataKey="time"
-            tick={{ fill: '#64748b', fontSize: 11 }}
+            tick={{ fill: 'rgba(255,255,255,0.28)', fontSize: 11 }}
             tickLine={false}
           />
           <YAxis
             tickFormatter={formatY}
-            tick={{ fill: '#64748b', fontSize: 11 }}
+            tick={{ fill: 'rgba(255,255,255,0.28)', fontSize: 11 }}
             tickLine={false}
             axisLine={false}
             width={42}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#0f172a',
-              border: '1px solid #334155',
-              borderRadius: '8px',
-              color: '#e2e8f0',
+              backgroundColor: '#0b1812',
+              border: '1px solid rgba(52,211,153,0.15)',
+              borderRadius: '10px',
+              color: '#f8fafc',
               fontSize: 13,
             }}
             labelFormatter={(_, payload: ReadonlyArray<{ payload?: ChartPoint }>) => {
@@ -95,7 +95,7 @@ export function DemandChart({ history, regions }: Props) {
             formatter={(v: number) => [`${v.toLocaleString()} MW`]}
           />
           <Legend
-            wrapperStyle={{ fontSize: 12, color: '#94a3b8', paddingTop: 8 }}
+            wrapperStyle={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', paddingTop: 8 }}
           />
           {visible.map((r) => (
             <Line

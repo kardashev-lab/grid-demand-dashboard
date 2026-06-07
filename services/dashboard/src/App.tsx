@@ -1,14 +1,13 @@
 // root dashboard component - polls the aggregator API and lays out the
-// KPI strip, treemap, coverage map, detail panel, and trend chart.
+// hero, treemap, coverage map, detail panel, and trend chart.
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DemandChart } from './components/DemandChart';
 import { RegionMap } from './components/RegionMap';
-import { KpiStrip } from './components/KpiStrip';
 import { TreemapPanel } from './components/TreemapPanel';
 import { DetailPanel } from './components/DetailPanel';
+import { GridHero } from './components/GridHero';
 import { DemandMap, HistoryMap } from './types';
-import { REGIONS } from './regions';
 import './index.css';
 
 // 10 minutes between polls — EIA only updates hourly so no point hammering it
@@ -20,7 +19,6 @@ export default function App() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [connected, setConnected] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
-  // once the user manually clears selection, stop auto-picking the top BA
   const userClearedSelection = useRef(false);
 
   const fetchData = useCallback(async () => {
@@ -46,7 +44,6 @@ export default function App() {
     return () => clearInterval(id);
   }, [fetchData]);
 
-  // auto-select the biggest BA on first load so the detail panel isn't blank
   useEffect(() => {
     if (selected) return;
     if (userClearedSelection.current) return;
@@ -56,7 +53,6 @@ export default function App() {
 
   const hasData = Object.keys(demand).length > 0;
 
-  // cap to 5 lines max — more than that and the chart turns into spaghetti
   const trendRegions = useMemo(() => {
     const top = Object.entries(demand)
       .sort(([, a], [, b]) => b.value - a.value)
@@ -67,32 +63,22 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-inner">
-          <div className="header-brand">
-            <span className={`live-dot ${connected ? 'live-dot--on' : 'live-dot--off'}`} />
-            <div className="header-titles">
-              <h1>US Grid Demand</h1>
-              <p className="header-sub">{REGIONS.length} balancing authorities · live from EIA</p>
-            </div>
-          </div>
-          <div className="header-status">
-            {lastUpdated && (
-              <span className="updated-at">
-                Updated {lastUpdated.toLocaleTimeString()}
-              </span>
-            )}
-            {!connected && <span className="badge-error">Disconnected</span>}
-          </div>
-        </div>
-      </header>
+      <div className="ambient" aria-hidden>
+        <div className="ambient__orb ambient__orb--sky" />
+        <div className="ambient__orb ambient__orb--amber" />
+      </div>
+
+      <GridHero
+        demand={demand}
+        history={history}
+        lastUpdated={lastUpdated}
+        connected={connected}
+      />
 
       <main className="main">
         {hasData ? (
           <>
-            <KpiStrip demand={demand} history={history} />
-
-            <section className="panel">
+            <section className="panel panel--featured">
               <div className="panel-head">
                 <div>
                   <h2>Magnitude</h2>
@@ -154,10 +140,29 @@ export default function App() {
           </>
         ) : (
           <div className="empty-state">
-            <p>Waiting for data from fetchers…</p>
+            <img
+              className="empty-state__img"
+              src="/images/hero-substation.jpg"
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="empty-state__content">
+              <p className="empty-state__title">Waiting for data from fetchers…</p>
+              <p className="empty-state__hint">Ensure <code>EIA_API_KEY</code> is set and fetchers are running.</p>
+            </div>
           </div>
         )}
       </main>
+
+      <footer className="footer">
+        <p>
+          Data via{' '}
+          <a href="https://www.eia.gov/opendata/" target="_blank" rel="noopener noreferrer">EIA Open Data</a>
+          {' · '}
+          <a href="https://kardashevlabs.org" target="_blank" rel="noopener noreferrer">Kardashev Labs</a>
+        </p>
+      </footer>
     </div>
   );
 }

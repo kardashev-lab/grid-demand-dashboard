@@ -9,8 +9,7 @@ x-fetcher-base: &fetcher-base
 services:
   redis:
     image: redis:7-alpine
-    ports:
-      - '6379:6379'
+    # no host port — avoids conflict with local Redis; fetchers/aggregator use redis:6379
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
@@ -23,8 +22,7 @@ services:
       POSTGRES_DB: griddemand
       POSTGRES_USER: griddemand
       POSTGRES_PASSWORD: griddemand
-    ports:
-      - '5432:5432'
+    # no host port — avoids conflict with local Postgres; aggregator uses postgres:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -157,7 +155,7 @@ services:
     build:
       context: ./services/aggregator
     ports:
-      - '3000:3000'
+      - '3001:3000'   # 3001 on host — 3000 often taken by other dev stacks
     environment:
       REDIS_URL: redis://redis:6379
       DATABASE_URL: postgres://griddemand:griddemand@postgres:5432/griddemand
