@@ -19,7 +19,7 @@ function listenPort(): number {
 const PORT = listenPort();
 const HOST = process.env.HOST ?? '0.0.0.0';
 const KARDASHEV_API = process.env.KARDASHEV_API_URL ?? 'https://data.kardashevlabs.org';
-const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL ?? '1200000');
+const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL ?? '300000'); // 5 min
 const BACKFILL_HOURS = parseInt(process.env.BACKFILL_HOURS ?? '48');
 const STATIC_DIR = process.env.STATIC_DIR ?? path.join(__dirname, '..', '..', 'dashboard', 'dist');
 
