@@ -1,26 +1,25 @@
-// EIA v2 API client. Pulls latest hourly demand for a balancing authority.
+// kardashev-data API client. Pulls latest hourly demand for a balancing authority.
 
 import axios from 'axios';
 
-const BASE_URL = 'https://api.eia.gov/v2';
+const API_BASE = process.env.KARDASHEV_API_URL ?? 'https://data.kardashevlabs.org';
 
-// EIA uses different codes than the common ISO abbreviations everyone else uses
-const RESPONDENT_MAP: Record<string, string> = {
-  CAISO: 'CISO',
-  ERCOT: 'ERCO',
-  PJM: 'PJM',
-  MISO: 'MISO',
-  NYISO: 'NYIS',
-  ISONE: 'ISNE',
-  SPP: 'SWPP',
-  BPAT: 'BPAT',
-  TVA: 'TVA',
-  SOCO: 'SOCO',
-  FPL: 'FPL',
-  DUK: 'DUK',
-  SRP: 'SRP',
-  PSCO: 'PSCO',
-  PACE: 'PACE',
+const ISO_MAP: Record<string, string> = {
+  CAISO: 'CAISO',
+  ERCOT: 'ERCOT',
+  PJM:   'PJM',
+  MISO:  'MISO',
+  NYISO: 'NYISO',
+  ISONE: 'ISONE',
+  SPP:   'SPP',
+  BPAT:  'BPAT',
+  TVA:   'TVA',
+  SOCO:  'SOCO',
+  FPL:   'FPL',
+  DUK:   'DUK',
+  SRP:   'SRP',
+  PSCO:  'PSCO',
+  PACE:  'PACE',
 };
 
 export interface HistoryRow {
@@ -28,66 +27,37 @@ export interface HistoryRow {
   value: number;
 }
 
-export async function fetchDemand(region: string, apiKey: string): Promise<number> {
-  const rows = await fetchRows(region, apiKey, 8);
+interface LoadPoint {
+  ts: string;
+  iso: string;
+  zone: string;
+  mw_actual: number | null;
+  mw_forecast: number | null;
+}
+
+async function fetchLoadRows(region: string, hours: number): Promise<LoadPoint[]> {
+  const iso = ISO_MAP[region];
+  if (!iso) throw new Error(`Unknown region: ${region}`);
+
+  const response = await axios.get<LoadPoint[]>(`${API_BASE}/load`, {
+    params: { iso, hours, limit: hours + 5 },
+    timeout: 12000,
+  });
+
+  return response.data ?? [];
+}
+
+export async function fetchDemand(region: string): Promise<number> {
+  const rows = await fetchLoadRows(region, 3);
   for (const row of rows) {
-    if (row.value > 0) return Math.round(row.value);
+    if (row.mw_actual && row.mw_actual > 0) return Math.round(row.mw_actual);
   }
-  throw new Error(`No valid demand value in latest ${rows.length} rows for ${region}`);
+  throw new Error(`No valid demand value in latest rows for ${region}`);
 }
 
-// last N hourly rows, newest -> oldest already filtered to valid values
-export async function fetchHistory(region: string, apiKey: string, hours: number): Promise<HistoryRow[]> {
-  const rows = await fetchRows(region, apiKey, hours);
+export async function fetchHistory(region: string, hours: number): Promise<HistoryRow[]> {
+  const rows = await fetchLoadRows(region, hours);
   return rows
-    .filter((r) => r.value > 0)
-    .map((r) => ({ timestamp: r.timestamp, value: Math.round(r.value) }));
-}
-
-async function fetchRows(region: string, apiKey: string, length: number): Promise<{ timestamp: string; value: number }[]> {
-  const respondent = RESPONDENT_MAP[region];
-  if (!respondent) throw new Error(`Unknown region: ${region}`);
-
-  const response = await axios.get<EiaResponse>(
-    `${BASE_URL}/electricity/rto/region-data/data/`,
-    {
-      params: {
-        api_key: apiKey,
-        frequency: 'hourly',
-        'data[0]': 'value',
-        'facets[respondent][]': respondent,
-        'facets[type][]': 'D',
-        'sort[0][column]': 'period',
-        'sort[0][direction]': 'desc',
-        length,
-      },
-      timeout: 12000,
-    }
-  );
-
-  const rows = response.data?.response?.data;
-  if (!Array.isArray(rows) || rows.length === 0) {
-    throw new Error(`No data returned for ${respondent}`);
-  }
-
-  return rows.map((row) => ({
-    // EIA periods look like "2026-05-09T10" — tack on minutes/seconds so Date() is happy
-    timestamp: new Date(row.period + ':00:00Z').toISOString(),
-    value: Number(row.value),
-  }));
-}
-
-interface EiaRow {
-  period: string;
-  respondent: string;
-  type: string;
-  value: number | string | null;
-  'value-units'?: string;
-}
-
-interface EiaResponse {
-  response: {
-    data: EiaRow[];
-    total?: number;
-  };
+    .filter((r) => r.mw_actual && r.mw_actual > 0)
+    .map((r) => ({ timestamp: new Date(r.ts).toISOString(), value: Math.round(r.mw_actual!) }));
 }
