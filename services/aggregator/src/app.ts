@@ -7,7 +7,17 @@ import { getLatest, getHistory } from './store';
 
 export function createApp(staticDir?: string) {
   const app = express();
-  app.use(cors());
+  const allowedOrigins = [
+    'https://grid-demand.kardashevlabs.org',
+    'http://localhost:3000',
+    'http://localhost:5173',
+  ];
+  app.use(cors({
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) cb(null, true);
+      else cb(null, false);
+    },
+  }));
   app.use(express.json());
 
   // Lightweight path for platform probes (Railway). Keeps checks off /api/* and SPA fallbacks.
