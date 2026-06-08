@@ -38,7 +38,7 @@ export function Sparkline({ readings, color, width = 140, height = 40 }: Props) 
   const id = `spark-grad-${color.replace(/[^a-z0-9]/gi, '')}`;
 
   return (
-    <svg width={width} height={height} className="sparkline">
+    <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} className="sparkline" preserveAspectRatio="none">
       <defs>
         <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.45" />

@@ -359,6 +359,15 @@ body::before {
 }
 .map-tooltip-value.muted { color: var(--text-3); font-style: italic; }
 
+.map-tooltip--pinned {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  top: auto;
+  pointer-events: auto;
+}
+
 /* ---------------- detail panel ---------------- */
 .detail {
   display: flex;
@@ -590,4 +599,12 @@ body::before {
   .main { padding: 0 16px 32px; }
   .footer { padding: 0 16px 32px; }
   .panel { padding: 1rem 1.1rem 1.2rem; border-radius: 20px; }
+  .panel-head {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .clear-btn {
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+  }
 }
