@@ -8,6 +8,7 @@ import { TreemapPanel } from './components/TreemapPanel';
 import { DetailPanel } from './components/DetailPanel';
 import { GridHero } from './components/GridHero';
 import { DemandMap, HistoryMap } from './types';
+import { localTimeZoneAbbr } from './lib/time';
 import './index.css';
 
 // 5-minute poll — CAISO/ERCOT/MISO/NYISO now publish 5-min native data
@@ -130,7 +131,7 @@ export default function App() {
                   <h2>Trends</h2>
                   <p className="panel-sub">
                     {trendRegions.length > 0
-                      ? `5-min · ${trendRegions.join(' · ')}`
+                      ? `5-min · ${trendRegions.join(' · ')} · ${localTimeZoneAbbr()}`
                       : 'Awaiting data…'}
                   </p>
                 </div>
