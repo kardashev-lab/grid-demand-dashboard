@@ -1,5 +1,5 @@
 # Minimal single-container deploy for Railway: Express API + static dashboard +
-# in-process EIA polling for all regions. No Redis or fetcher fleet.
+# in-process kardashev-data polling for all regions. No Redis or fetcher fleet.
 
 FROM node:20-bookworm-slim AS dashboard-build
 WORKDIR /src/dashboard

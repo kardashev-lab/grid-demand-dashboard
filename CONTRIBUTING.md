@@ -1,10 +1,10 @@
 # Contributing to Grid Demand Dashboard
 
-Thanks for helping make live US electricity demand easier to see. This project monitors hourly EIA demand across 15 balancing authorities and includes a small distributed-services stack for ingest, storage, and visualization.
+Thanks for helping make live US electricity demand easier to see. This project monitors demand across 15 balancing authorities and includes a small distributed-services stack for ingest, storage, and visualization.
 
 ## What this repo does
 
-- Fetches EIA demand data.
+- Fetches demand data from the [kardashev-data](https://github.com/kardashev-lab/kardashev-data) API.
 - Serves a REST API from the aggregator service.
 - Visualizes regional demand in a React dashboard.
 - Includes optional Redis Streams, Postgres, Docker Compose, and Helm/Kubernetes deployment paths.
@@ -14,15 +14,14 @@ Stack: React/Vite, Node.js/Express, TypeScript, Redis Streams, Postgres, Docker 
 ## Local setup
 
 ```bash
-cp .env.example .env
-# set EIA_API_KEY
+cp .env.example .env   # defaults work out of the box, no API key needed
 docker compose up --build
 ```
 
 Open:
 
 - Dashboard: `http://localhost:8080`
-- API: `http://localhost:3000/api/demand`
+- API: `http://localhost:3001/api/demand`
 
 ## Before opening a PR
 
@@ -39,7 +38,7 @@ If you change the dashboard, run it locally and include screenshots.
 - Add a clearer timestamp/timezone label.
 - Improve mobile map interactions.
 - Add tests for one aggregator endpoint.
-- Document one balancing authority and its EIA code.
+- Document one balancing authority and its region code.
 
 ## Reliability guidelines
 

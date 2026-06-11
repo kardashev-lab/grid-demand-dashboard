@@ -11,12 +11,8 @@ image:
   aggregator: grid-demand-aggregator
   dashboard: grid-demand-dashboard
 
-# EIA API key (https://api.eia.gov/register/)
-eiaApiKey: ""
-secret:
-  create: true
-  name: eia-api
-  key: EIA_API_KEY
+# Base URL of the kardashev-data API fetchers poll for demand readings
+kardashevApiUrl: "https://data.kardashevlabs.org"
 
 redis:
   image: redis:7-alpine
@@ -44,7 +40,7 @@ postgres:
       memory: 512Mi
 
 fetcher:
-  # 20 minutes — EIA only updates hourly so anything faster just burns rate limit
+  # 20 minutes — upstream data updates every ~5 min; this keeps load modest
   pollIntervalMs: "1200000"
   # 7 ISOs/RTOs + 8 non-ISO BAs
   regions:

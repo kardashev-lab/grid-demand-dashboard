@@ -36,7 +36,7 @@ services:
     environment:
       REGION: CAISO
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-ercot:
@@ -44,7 +44,7 @@ services:
     environment:
       REGION: ERCOT
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-pjm:
@@ -52,7 +52,7 @@ services:
     environment:
       REGION: PJM
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-miso:
@@ -60,7 +60,7 @@ services:
     environment:
       REGION: MISO
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-nyiso:
@@ -68,7 +68,7 @@ services:
     environment:
       REGION: NYISO
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-isone:
@@ -76,7 +76,7 @@ services:
     environment:
       REGION: ISONE
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-spp:
@@ -84,7 +84,7 @@ services:
     environment:
       REGION: SPP
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-bpat:
@@ -92,7 +92,7 @@ services:
     environment:
       REGION: BPAT
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-tva:
@@ -100,7 +100,7 @@ services:
     environment:
       REGION: TVA
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-soco:
@@ -108,7 +108,7 @@ services:
     environment:
       REGION: SOCO
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-fpl:
@@ -116,7 +116,7 @@ services:
     environment:
       REGION: FPL
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-duk:
@@ -124,7 +124,7 @@ services:
     environment:
       REGION: DUK
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-srp:
@@ -132,7 +132,7 @@ services:
     environment:
       REGION: SRP
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-psco:
@@ -140,7 +140,7 @@ services:
     environment:
       REGION: PSCO
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   fetcher-pace:
@@ -148,7 +148,7 @@ services:
     environment:
       REGION: PACE
       REDIS_URL: redis://redis:6379
-      EIA_API_KEY: ${EIA_API_KEY:-}
+      KARDASHEV_API_URL: ${KARDASHEV_API_URL:-https://data.kardashevlabs.org}
       POLL_INTERVAL: ${POLL_INTERVAL:-1200000}
 
   aggregator:

@@ -1,4 +1,4 @@
-# one deployment per region — each fetcher polls EIA independently so rate limits don't block other BAs
+# one deployment per region — each fetcher polls kardashev-data independently so one slow BA doesn't block others
 {{- range $region := .Values.fetcher.regions }}
 {{- $regionLower := lower $region }}
 ---
@@ -35,12 +35,8 @@ spec:
               value: redis://redis:6379
             - name: POLL_INTERVAL
               value: {{ $.Values.fetcher.pollIntervalMs | quote }}
-            # shared API key across all fetcher pods — EIA doesn't scope keys per region
-            - name: EIA_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $.Values.secret.name }}
-                  key: {{ $.Values.secret.key }}
+            - name: KARDASHEV_API_URL
+              value: {{ $.Values.kardashevApiUrl | quote }}
           resources:
             {{- toYaml $.Values.fetcher.resources | nindent 12 }}
 {{- end }}

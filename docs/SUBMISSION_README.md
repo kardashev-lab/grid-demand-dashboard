@@ -1,5 +1,11 @@
 # Grid Demand Dashboard
 
+> **Historical note:** this document is the course-project submission as written. The
+> distributed architecture (fetchers → Redis Streams → aggregator → Postgres) still runs
+> via Compose and Helm, but the data source has since migrated from the EIA v2 API to the
+> [kardashev-data](https://github.com/kardashev-lab/kardashev-data) API — no API key is
+> required anymore. See the repo [README](../README.md) for current setup.
+
 Real-time US electricity demand across 15 balancing authorities (~95% CONUS). Microservices pipeline on Docker Compose and Kubernetes with Redis Streams, Postgres, and 17 HPAs.
 
 Data source: [EIA v2 API](https://www.eia.gov/opendata/) (free, government-published, no row caps).  
