@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  aggregator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: services/aggregator/package-lock.json
+
+      - name: Install
+        working-directory: services/aggregator
+        run: npm ci
+
+      - name: Test
+        working-directory: services/aggregator
+        run: npm test
+
+      - name: Build
+        working-directory: services/aggregator
+        run: npm run build
+
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: services/dashboard/package-lock.json
+
+      - name: Install
+        working-directory: services/dashboard
+        run: npm ci
+
+      - name: Build
+        working-directory: services/dashboard
+        run: npm run build
+
+  fetcher:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: services/fetcher/package-lock.json
+
+      - name: Install
+        working-directory: services/fetcher
+        run: npm ci
+
+      - name: Build
+        working-directory: services/fetcher
+        run: npm run build

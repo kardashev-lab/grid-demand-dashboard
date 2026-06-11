@@ -2,9 +2,13 @@
 
 import request from 'supertest';
 import { createApp } from '../app';
-import { updateDemand } from '../store';
+import { resetStore, updateDemand } from '../store';
 
 const app = createApp();
+
+beforeEach(() => {
+  resetStore();
+});
 
 const CAISO_READING = {
   region: 'CAISO',
@@ -42,6 +46,7 @@ describe('GET /api/demand', () => {
   it('returns empty object before any data arrives', async () => {
     const res = await request(app).get('/api/demand');
     expect(res.status).toBe(200);
+    expect(res.body).toEqual({});
   });
 
   it('returns seeded readings after updateDemand calls', async () => {

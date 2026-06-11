@@ -57,6 +57,11 @@ export function hydrate(byRegion: Record<string, DemandReading[]>): void {
   console.log(`Hydrated store with ${count} readings across ${Object.keys(byRegion).length} regions`);
 }
 
+// test helper — clears all regions so test cases don't leak state into each other
+export function resetStore(): void {
+  store.clear();
+}
+
 export function getLatest(): Record<string, DemandReading> {
   const out: Record<string, DemandReading> = {};
   for (const [region, state] of store) out[region] = state.latest;
