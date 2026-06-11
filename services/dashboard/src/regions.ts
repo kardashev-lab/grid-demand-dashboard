@@ -25,23 +25,26 @@ export const REGION_LABELS: Record<string, string> = {
   PACE:  'PacifiCorp East',
 };
 
-// hand-picked so adjacent regions on the map don't look the same
+// Hand-picked so adjacent regions on the map don't look the same.
+// Hues keep the original adjacency relationships but are desaturated
+// and lightness-matched so the treemap/map read as one palette instead
+// of a full-saturation rainbow.
 export const REGION_COLORS: Record<string, string> = {
-  CAISO: '#3b82f6',
-  ERCOT: '#10b981',
-  PJM:   '#f59e0b',
-  MISO:  '#a855f7',
-  NYISO: '#ec4899',
-  ISONE: '#14b8a6',
-  SPP:   '#f97316',
-  BPAT:  '#06b6d4',
-  TVA:   '#84cc16',
-  SOCO:  '#ef4444',
-  FPL:   '#eab308',
-  DUK:   '#6366f1',
-  SRP:   '#d946ef',
-  PSCO:  '#22c55e',
-  PACE:  '#f43f5e',
+  CAISO: '#6ea3cf',
+  ERCOT: '#54b08d',
+  PJM:   '#e3b04e',
+  MISO:  '#9d8ec7',
+  NYISO: '#c98ba6',
+  ISONE: '#5fb3ab',
+  SPP:   '#d99a62',
+  BPAT:  '#67b4c9',
+  TVA:   '#a8bf6e',
+  SOCO:  '#cf7d6d',
+  FPL:   '#d4bc72',
+  DUK:   '#8a93c9',
+  SRP:   '#bd8cc0',
+  PSCO:  '#7dbb84',
+  PACE:  '#bf7e85',
 };
 
 // state FIPS code -> primary BA. Some states overlap multiple BAs in real life;
