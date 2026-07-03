@@ -11,7 +11,7 @@ import { DemandMap, HistoryMap } from './types';
 import { localTimeZoneAbbr } from './lib/time';
 import './index.css';
 
-// 5-minute poll — CAISO/ERCOT/MISO/NYISO now publish 5-min native data
+// 5-minute poll: CAISO/ERCOT/MISO/NYISO now publish 5-min native data
 const POLL_MS = 300_000;
 
 export default function App() {

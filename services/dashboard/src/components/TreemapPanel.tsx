@@ -67,11 +67,11 @@ interface TileProps {
 
 function Tile(props: TileProps) {
   const { x = 0, y = 0, width = 0, height = 0, name, size, color, depth, selected, onSelect } = props;
-  // recharts renders a root node at depth 0 that wraps everything — skip it
+  // recharts renders a root node at depth 0 that wraps everything, skip it
   if (depth === 0 || !name || !size) return <g />;
 
   const isSelected = selected === name;
-  // only show text if the tile is big enough — tiny tiles get unreadable fast
+  // only show text if the tile is big enough, tiny tiles get unreadable fast
   const showLabel = width > 56 && height > 28;
   const showValue = width > 80 && height > 48;
 

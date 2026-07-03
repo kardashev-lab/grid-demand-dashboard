@@ -2,7 +2,7 @@
 
 Live at **[grid-demand.kardashevlabs.org](https://grid-demand.kardashevlabs.org)** · Part of [Kardashev Labs](https://kardashevlabs.org)
 
-US electricity demand across **15 balancing authorities** (~95% of CONUS load) — regional map, treemap, and 48-hour trends.
+US electricity demand across **15 balancing authorities** (~95% of CONUS load): regional map, treemap, and 48-hour trends.
 
 **Stack:** React (Vite) dashboard · Express/TypeScript API · Redis Streams + Postgres (distributed stack) · Docker Compose · Helm/Kubernetes · slim **[Railway](https://railway.app)** image (`Dockerfile.railway`).
 

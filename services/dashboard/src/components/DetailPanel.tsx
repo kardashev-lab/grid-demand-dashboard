@@ -26,7 +26,7 @@ export function DetailPanel({ region, data, history }: Props) {
   const label = REGION_LABELS[region] ?? region;
   const isIso = ISO_SET.has(region);
 
-  // hour-over-hour percent change — only show if we have at least 2 data points
+  // hour-over-hour percent change, only show if we have at least 2 data points
   let delta: number | null = null;
   if (history && history.length >= 2) {
     const prev = history[history.length - 2].value;
@@ -70,7 +70,7 @@ export function DetailPanel({ region, data, history }: Props) {
                 <span>Last {history.length} hours</span>
                 {min !== null && max !== null && (
                   <span>
-                    {min.toLocaleString()} – {max.toLocaleString()} MW
+                    {min.toLocaleString()} - {max.toLocaleString()} MW
                   </span>
                 )}
               </div>

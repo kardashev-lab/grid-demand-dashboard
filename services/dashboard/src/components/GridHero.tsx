@@ -1,4 +1,4 @@
-// full-bleed hero — title, live status, and headline KPIs over transmission photo
+// full-bleed hero: title, live status, and headline KPIs over transmission photo
 
 import { DemandMap, HistoryMap } from '../types';
 import { REGION_COLORS, REGIONS } from '../regions';

@@ -60,7 +60,7 @@ export function DemandChart({ history, regions }: Props) {
   }
 
   ordered.sort((a, b) => a.sortKey - b.sortKey);
-  // show last 24h: 288 slots at 5-min, 24 slots at hourly — both fit well
+  // show last 24h: 288 slots at 5-min, 24 slots at hourly, both fit well
   const data = ordered.map((o) => seen.get(o.label)!).slice(-288);
 
   const formatY = (v: number) =>
