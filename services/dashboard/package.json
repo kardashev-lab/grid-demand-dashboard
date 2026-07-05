@@ -20,5 +20,11 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "typescript": "^5.4.0"
+  },
+  "overrides": {
+    "react-simple-maps": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
   }
 }
