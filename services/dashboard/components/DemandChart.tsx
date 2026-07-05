@@ -10,8 +10,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { HistoryMap } from '../types';
-import { REGION_COLORS } from '../regions';
+import type { HistoryMap } from "@/lib/types";
+import { REGION_COLORS } from "@/lib/regions";
 
 interface Props {
   history: HistoryMap;

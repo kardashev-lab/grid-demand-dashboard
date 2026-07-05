@@ -1,4 +1,4 @@
-// shared frontend types. mirrors the shape returned by the aggregator API.
+// shared types. mirrors the shape returned by /api/demand and /api/demand/history.
 
 export interface DemandReading {
   region: string;

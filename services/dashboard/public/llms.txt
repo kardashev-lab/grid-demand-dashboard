@@ -25,7 +25,7 @@ The dashboard visualizes live and historical electricity demand (load) reported 
 
 ## Architecture note
 
-This dashboard is a client-rendered single-page app (Vite + React) with no server-side rendering, so page content is not visible to crawlers that do not execute JavaScript. Structured data (JSON-LD) is embedded statically in index.html to describe the tool, but live demand numbers are only visible in-browser.
+This dashboard is server-rendered (Next.js): the current demand reading for every balancing authority is present as plain text in the initial HTML response, so crawlers and AI agents that don't execute JavaScript still see real, current numbers -- not just a static shell.
 
 ## About Kardashev Labs
 

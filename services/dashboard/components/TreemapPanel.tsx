@@ -1,8 +1,8 @@
 // magnitude treemap - tile area is proportional to current MW, click to select.
 
 import { Treemap, ResponsiveContainer } from 'recharts';
-import { DemandMap } from '../types';
-import { REGION_COLORS } from '../regions';
+import type { DemandMap } from "@/lib/types";
+import { REGION_COLORS } from "@/lib/regions";
 
 interface Props {
   demand: DemandMap;

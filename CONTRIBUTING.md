@@ -9,7 +9,7 @@ Thanks for helping make live US electricity demand easier to see. This project m
 - Visualizes regional demand in a React dashboard.
 - Includes optional Redis Streams, Postgres, Docker Compose, and Helm/Kubernetes deployment paths.
 
-Stack: React/Vite, Node.js/Express, TypeScript, Redis Streams, Postgres, Docker Compose, Helm/Kubernetes, Railway.
+Stack: Next.js (server-rendered React), Node.js/Express, TypeScript, Redis Streams, Postgres, Docker Compose, Helm/Kubernetes, Railway.
 
 ## Local setup
 

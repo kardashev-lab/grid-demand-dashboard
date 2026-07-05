@@ -1,6 +1,9 @@
 .env
 node_modules/
 dist/
+.next/
+*.tsbuildinfo
+next-env.d.ts
 .DS_Store
 experiments/
 

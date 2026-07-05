@@ -1,66 +1,82 @@
-// root dashboard component - polls the aggregator API and lays out the
-// hero, treemap, coverage map, detail panel, and trend chart.
+"use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { DemandChart } from './components/DemandChart';
-import { RegionMap } from './components/RegionMap';
-import { TreemapPanel } from './components/TreemapPanel';
-import { DetailPanel } from './components/DetailPanel';
-import { GridHero } from './components/GridHero';
-import { DemandMap, HistoryMap } from './types';
-import { localTimeZoneAbbr } from './lib/time';
-import './index.css';
+// root dashboard component - polls /api/demand + /api/demand/history and lays out the
+// hero, treemap, coverage map, detail panel, and trend chart. Initial data comes from
+// the server component (app/page.tsx), which reads the in-memory store directly (no
+// network hop) so the first paint already has real numbers, not an empty shell.
+
+import { useState, useEffect, useMemo, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import useSWR from 'swr';
+import { DemandChart } from './DemandChart';
+import { TreemapPanel } from './TreemapPanel';
+import { DetailPanel } from './DetailPanel';
+import { GridHero } from './GridHero';
+import type { DemandMap, HistoryMap } from '@/lib/types';
+import { localTimeZoneAbbr } from '@/lib/time';
+
+// react-simple-maps manipulates SVG DOM extensively and isn't worth SSR-ing (the
+// real GEO-relevant content -- actual MW numbers -- already renders in GridHero/
+// TreemapPanel/DetailPanel/DemandChart as plain text).
+const RegionMap = dynamic(() => import('./RegionMap').then((m) => m.RegionMap), { ssr: false });
 
 // 5-minute poll: CAISO/ERCOT/MISO/NYISO now publish 5-min native data
 const POLL_MS = 300_000;
 
-export default function App() {
-  const [demand, setDemand] = useState<DemandMap>({});
-  const [history, setHistory] = useState<HistoryMap>({});
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [connected, setConnected] = useState(true);
+const fetcher = (url: string) =>
+  fetch(url).then((r) => {
+    if (!r.ok) throw new Error('API error');
+    return r.json();
+  });
+
+interface Props {
+  initialDemand?: DemandMap;
+  initialHistory?: HistoryMap;
+}
+
+export default function DashboardClient({ initialDemand, initialHistory }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
+  // Always starts null (not new Date()): computing a timestamp in a useState
+  // initializer runs once at SSR time and again at hydration, producing two
+  // different values and a hydration text mismatch. The effect below sets it
+  // client-only, after hydration completes.
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const userClearedSelection = useRef(false);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [dRes, hRes] = await Promise.all([
-        fetch('/api/demand'),
-        fetch('/api/demand/history'),
-      ]);
-      if (!dRes.ok || !hRes.ok) throw new Error('API error');
-      const [d, h] = await Promise.all([dRes.json(), hRes.json()]);
-      setDemand(d);
-      setHistory(h);
-      setLastUpdated(new Date());
-      setConnected(true);
-    } catch {
-      setConnected(false);
-    }
-  }, []);
+  const { data: demand, error: demandError } = useSWR<DemandMap>('/api/demand', fetcher, {
+    refreshInterval: POLL_MS,
+    fallbackData: initialDemand,
+  });
+  const { data: history, error: historyError } = useSWR<HistoryMap>(
+    '/api/demand/history',
+    fetcher,
+    { refreshInterval: POLL_MS, fallbackData: initialHistory }
+  );
+
+  const connected = !demandError && !historyError;
+  const demandMap = demand ?? {};
+  const historyMap = history ?? {};
 
   useEffect(() => {
-    fetchData();
-    const id = setInterval(fetchData, POLL_MS);
-    return () => clearInterval(id);
-  }, [fetchData]);
+    if (demand) setLastUpdated(new Date());
+  }, [demand]);
 
   useEffect(() => {
     if (selected) return;
     if (userClearedSelection.current) return;
-    const top = Object.entries(demand).sort(([, a], [, b]) => b.value - a.value)[0]?.[0];
+    const top = Object.entries(demandMap).sort(([, a], [, b]) => b.value - a.value)[0]?.[0];
     if (top) setSelected(top);
-  }, [demand, selected]);
+  }, [demandMap, selected]);
 
-  const hasData = Object.keys(demand).length > 0;
+  const hasData = Object.keys(demandMap).length > 0;
 
   const trendRegions = useMemo(() => {
-    const top = Object.entries(demand)
+    const top = Object.entries(demandMap)
       .sort(([, a], [, b]) => b.value - a.value)
       .map(([k]) => k);
     if (!selected) return top.slice(0, 5);
     return Array.from(new Set([selected, ...top])).slice(0, 5);
-  }, [demand, selected]);
+  }, [demandMap, selected]);
 
   return (
     <div className="app">
@@ -70,8 +86,8 @@ export default function App() {
       </div>
 
       <GridHero
-        demand={demand}
-        history={history}
+        demand={demandMap}
+        history={historyMap}
         lastUpdated={lastUpdated}
         connected={connected}
       />
@@ -86,7 +102,7 @@ export default function App() {
                   <p className="panel-sub">Tile area is proportional to current load. Click any tile.</p>
                 </div>
               </div>
-              <TreemapPanel demand={demand} selected={selected} onSelect={setSelected} />
+              <TreemapPanel demand={demandMap} selected={selected} onSelect={setSelected} />
             </section>
 
             <section className="map-detail-grid">
@@ -108,7 +124,7 @@ export default function App() {
                     </button>
                   )}
                 </div>
-                <RegionMap demand={demand} selected={selected} onSelect={setSelected} />
+                <RegionMap demand={demandMap} selected={selected} onSelect={setSelected} />
               </div>
               <div className="panel">
                 <div className="panel-head">
@@ -119,8 +135,8 @@ export default function App() {
                 </div>
                 <DetailPanel
                   region={selected}
-                  data={selected ? demand[selected] ?? null : null}
-                  history={selected ? history[selected] : undefined}
+                  data={selected ? demandMap[selected] ?? null : null}
+                  history={selected ? historyMap[selected] : undefined}
                 />
               </div>
             </section>
@@ -136,7 +152,7 @@ export default function App() {
                   </p>
                 </div>
               </div>
-              <DemandChart history={history} regions={trendRegions} />
+              <DemandChart history={historyMap} regions={trendRegions} />
             </section>
           </>
         ) : (

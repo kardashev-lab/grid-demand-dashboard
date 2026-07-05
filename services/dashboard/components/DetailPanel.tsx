@@ -1,8 +1,8 @@
 // detail view for the selected BA: current MW, hour-over-hour delta, sparkline.
 
-import { DemandReading } from '../types';
-import { REGION_COLORS, REGION_LABELS } from '../regions';
-import { Sparkline } from './Sparkline';
+import type { DemandReading } from "@/lib/types";
+import { REGION_COLORS, REGION_LABELS } from "@/lib/regions";
+import { Sparkline } from "./Sparkline";
 
 interface Props {
   region: string | null;

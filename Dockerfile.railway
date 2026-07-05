@@ -1,31 +1,27 @@
-# Minimal single-container deploy for Railway: Express API + static dashboard +
-# in-process kardashev-data polling for all regions. No Redis or fetcher fleet.
+# Minimal single-container deploy for Railway: the Next.js dashboard now owns both
+# the API (Route Handlers, same contract the old Express aggregator served) and the
+# in-process kardashev-data polling (instrumentation.ts -> lib/poller.ts). No Redis,
+# no Postgres, no fetcher fleet -- see services/aggregator + docker-compose.yml for
+# the actual distributed submission this was built to demonstrate.
 
-FROM node:20-bookworm-slim AS dashboard-build
-WORKDIR /src/dashboard
-COPY services/dashboard/package*.json ./
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY services/dashboard/package.json services/dashboard/package-lock.json* ./
 RUN npm ci
-COPY services/dashboard/ ./
+
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY services/dashboard/ .
 RUN npm run build
 
-FROM node:20-bookworm-slim AS aggregator-build
-WORKDIR /src/aggregator
-COPY services/aggregator/package*.json ./
-RUN npm ci
-COPY services/aggregator/ ./
-RUN npm run build
-
-FROM node:20-bookworm-slim AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY services/aggregator/package*.json ./
-RUN npm ci --omit=dev
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
-COPY --from=aggregator-build /src/aggregator/dist ./dist
-COPY --from=dashboard-build /src/dashboard/dist ./public
-
-ENV STATIC_DIR=/app/public
 EXPOSE 3000
-
-CMD ["node", "dist/railway.js"]
+CMD ["node", "server.js"]

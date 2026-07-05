@@ -172,6 +172,8 @@ services:
       context: ./services/dashboard
     ports:
       - '8080:80'
+    environment:
+      AGGREGATOR_API_URL: http://aggregator:3000
     depends_on:
       - aggregator
     restart: unless-stopped

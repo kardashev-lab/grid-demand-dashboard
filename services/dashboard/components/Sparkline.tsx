@@ -1,4 +1,4 @@
-import { DemandReading } from '../types';
+import type { DemandReading } from "@/lib/types";
 
 interface Props {
   readings: DemandReading[];

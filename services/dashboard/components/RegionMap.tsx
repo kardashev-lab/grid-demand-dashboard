@@ -1,7 +1,9 @@
+"use client";
+
 import { useEffect, useState } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
-import { DemandMap } from '../types';
-import { ISO_BY_FIPS, REGION_COLORS } from '../regions';
+import type { DemandMap } from "@/lib/types";
+import { ISO_BY_FIPS, REGION_COLORS } from "@/lib/regions";
 
 const TOPO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
 
