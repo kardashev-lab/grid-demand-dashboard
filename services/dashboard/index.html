@@ -16,9 +16,60 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Dataset",
+            "@id": "https://grid-demand.kardashevlabs.org/#dataset",
+            "name": "US Grid Demand Data",
+            "description": "Real-time and forecast US electricity demand across 15 balancing authorities, covering approximately 95% of the continental United States (CONUS). Sourced from the EIA Open Data API.",
+            "url": "https://grid-demand.kardashevlabs.org",
+            "creator": {
+              "@type": "Organization",
+              "name": "Kardashev Labs",
+              "url": "https://kardashevlabs.org"
+            },
+            "keywords": [
+              "electricity demand",
+              "grid load",
+              "balancing authority",
+              "EIA data",
+              "CAISO",
+              "ERCOT",
+              "PJM",
+              "MISO"
+            ],
+            "temporalCoverage": "..",
+            "license": "https://opensource.org/licenses/MIT"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://grid-demand.kardashevlabs.org/#website",
+            "url": "https://grid-demand.kardashevlabs.org",
+            "name": "US Grid Demand Dashboard",
+            "description": "Live US electricity demand across 15 balancing authorities, hourly data from the EIA Open Data API.",
+            "publisher": {
+              "@type": "Organization",
+              "name": "Kardashev Labs",
+              "url": "https://kardashevlabs.org"
+            },
+            "inLanguage": "en-US"
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <p>
+        This page shows a real-time US electricity demand dashboard covering 15 balancing
+        authorities (roughly 95% of the continental United States), with hourly data sourced
+        from the EIA. Enable JavaScript to view live charts and demand data.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

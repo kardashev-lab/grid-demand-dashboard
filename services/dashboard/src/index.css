@@ -307,6 +307,7 @@ body::before {
   border: 1px solid var(--border-2);
   color: var(--text-2);
   padding: 0.35rem 0.75rem;
+  min-height: 40px;
   border-radius: 999px;
   font-size: 0.75rem;
   font-family: var(--font-sans);

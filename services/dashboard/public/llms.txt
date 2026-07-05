@@ -1,0 +1,32 @@
+# US Grid Demand Dashboard
+
+> A free tool from Kardashev Labs showing real-time and forecast US electricity demand across 15 balancing authorities, covering approximately 95% of the continental United States (CONUS).
+
+The dashboard visualizes live and historical electricity demand (load) reported by US balancing authorities and ISOs, sourced from the EIA Open Data API via the kardashev-data platform. It is intended for anyone tracking grid load patterns: analysts, researchers, energy traders, and engineers.
+
+## What the data means
+
+- **Demand / load**: The amount of electricity (megawatts) being consumed on a balancing authority's system at a given hour.
+- **Balancing authority**: A regional entity responsible for matching electricity supply and demand in real time (e.g., CAISO, ERCOT, PJM, MISO).
+- **Forecast demand**: Day-ahead or short-term load forecasts published by the balancing authority or EIA, shown alongside actuals for comparison.
+- **CONUS coverage**: The dashboard's 15 tracked balancing authorities collectively represent roughly 95% of continental US electricity demand.
+
+## Coverage
+
+15 US balancing authorities including CAISO, ERCOT, PJM, MISO, SPP, NYISO, ISO-NE, and others, refreshed on an hourly cadence from EIA data.
+
+## Key facts
+
+- Free and open source
+- Source code: https://github.com/kardashev-lab
+- Part of Kardashev Labs: https://kardashevlabs.org
+- Data source: EIA Open Data API (https://www.eia.gov/opendata/), served via kardashev-data (https://data.kardashevlabs.org)
+- Contact: ashutosh@kardashevlabs.org
+
+## Architecture note
+
+This dashboard is a client-rendered single-page app (Vite + React) with no server-side rendering, so page content is not visible to crawlers that do not execute JavaScript. Structured data (JSON-LD) is embedded statically in index.html to describe the tool, but live demand numbers are only visible in-browser.
+
+## About Kardashev Labs
+
+Kardashev Labs builds free, open-source tools for US energy grid intelligence, accelerating humanity toward Kardashev Type I by making grid data universally accessible.
