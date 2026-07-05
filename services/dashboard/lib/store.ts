@@ -1,8 +1,5 @@
 // In-memory store. Latest reading + up to 576 slots (48h at 5-min resolution) per region.
 // EIA-backed regions fill ~48 slots (hourly); native ISO regions fill up to 576 (5-min).
-//
-// Ported verbatim from services/aggregator/src/store.ts (the Railway single-process API
-// contract this Next.js app now serves directly) -- keep the two in sync if either changes.
 
 import type { DemandReading } from "./types";
 

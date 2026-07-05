@@ -1,8 +1,6 @@
-# Minimal single-container deploy for Railway: the Next.js dashboard now owns both
-# the API (Route Handlers, same contract the old Express aggregator served) and the
-# in-process kardashev-data polling (instrumentation.ts -> lib/poller.ts). No Redis,
-# no Postgres, no fetcher fleet -- see services/aggregator + docker-compose.yml for
-# the actual distributed submission this was built to demonstrate.
+# Single-container deploy for Railway: the Next.js dashboard owns both the API
+# (Route Handlers) and the in-process kardashev-data polling
+# (instrumentation.ts -> lib/poller.ts). No Redis, no Postgres, no separate services.
 
 FROM node:20-alpine AS deps
 WORKDIR /app

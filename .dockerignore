@@ -1,12 +1,9 @@
 **/node_modules
 **/.git
 .git
-experiments
-report
-charts
 .env
 .env.*
 !.env.example
 **/*.md
 .DS_Store
-services/**/dist
+services/**/.next

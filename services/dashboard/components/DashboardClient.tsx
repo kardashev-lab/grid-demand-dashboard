@@ -165,8 +165,8 @@ export default function DashboardClient({ initialDemand, initialHistory }: Props
               decoding="async"
             />
             <div className="empty-state__content">
-              <p className="empty-state__title">Waiting for data from fetchers…</p>
-              <p className="empty-state__hint">Ensure <code>EIA_API_KEY</code> is set and fetchers are running.</p>
+              <p className="empty-state__title">Waiting for data…</p>
+              <p className="empty-state__hint">The poller backfills on boot — check back in a moment.</p>
             </div>
           </div>
         )}

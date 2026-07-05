@@ -5,10 +5,6 @@ dist/
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
-experiments/
-
-# Course write-up assets (docx, screenshots, local npm); not needed to run the stack
-report/
 
 # IDE / editor
 .idea/

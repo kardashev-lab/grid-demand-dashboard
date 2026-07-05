@@ -1,7 +1,6 @@
 // In-process poller: fetches all 15 regions from kardashev-data on boot (backfill) and
-// every POLL_INTERVAL after that. Ported from services/aggregator/src/railway.ts's
-// Railway single-process mode -- same fetch/backfill/poll logic, minus the Express
-// server bootstrapping (this Next.js app's instrumentation.ts calls start() once instead).
+// every POLL_INTERVAL after that. Started once from instrumentation.ts when the
+// server boots.
 
 import { REGIONS } from "./regions";
 import { hydrate, updateDemand } from "./store";

@@ -3,9 +3,9 @@ import path from "path";
 
 const config: NextConfig = {
   output: "standalone",
-  // Pin explicitly: this is a monorepo (services/dashboard, services/aggregator,
-  // services/fetcher each with their own lockfile), and Next's root inference can
-  // pick the wrong directory, which puts .next/standalone/server.js at the wrong path.
+  // Pin explicitly: this app lives nested under services/dashboard, and Next's root
+  // inference can pick the wrong directory (e.g. a lockfile elsewhere on the machine),
+  // which puts .next/standalone/server.js at the wrong path.
   outputFileTracingRoot: path.join(__dirname),
   transpilePackages: ["react-simple-maps"],
   async headers() {
