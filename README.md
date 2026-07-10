@@ -15,13 +15,22 @@ The dashboard is server-rendered, so the current demand numbers are visible in t
 to crawlers/AI agents, not just after client JS runs (`instrumentation.ts` → `lib/poller.ts`
 keeps an in-memory store warm; `app/page.tsx` reads it directly for SSR).
 
+## API
+
+- `GET /api/demand` — latest reading per region
+- `GET /api/demand/history` — 48-hour backfilled history per region
+- `GET /api/demand/:region` — latest reading for one region (e.g. `/api/demand/ercot`)
+- `GET /health` — platform probe (Railway)
+
 ## Local development
 
 ```bash
 cd services/dashboard && npm install && npm run dev
 ```
 
-Open http://localhost:3000. Defaults work out of the box — no env vars required.
+Open http://localhost:3000. Defaults work out of the box — no env vars required. Optional
+overrides (`KARDASHEV_API_URL`, `POLL_INTERVAL`, `BACKFILL_HOURS`) are documented in
+`.env.example`.
 
 ## Deploy on Railway
 
