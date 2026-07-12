@@ -166,7 +166,7 @@ export default function DashboardClient({ initialDemand, initialHistory }: Props
             />
             <div className="empty-state__content">
               <p className="empty-state__title">Waiting for data…</p>
-              <p className="empty-state__hint">The poller backfills on boot — check back in a moment.</p>
+              <p className="empty-state__hint">The poller backfills on boot, check back in a moment.</p>
             </div>
           </div>
         )}
