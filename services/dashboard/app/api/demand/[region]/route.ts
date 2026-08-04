@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getLatest } from "@/lib/store";
+import { loadDemandFromApi } from "@/lib/loadFromApi";
 
 export const dynamic = "force-dynamic";
 
@@ -9,9 +10,18 @@ export async function GET(
 ) {
   const { region: rawRegion } = await params;
   const region = rawRegion.toUpperCase();
-  const latest = getLatest();
+
+  let latest = getLatest();
   if (!latest[region]) {
-    return NextResponse.json({ error: `No data for region: ${region}` }, { status: 404 });
+    const loaded = await loadDemandFromApi();
+    latest = loaded.latest;
+  }
+
+  if (!latest[region]) {
+    return NextResponse.json(
+      { error: `No data for region: ${region}` },
+      { status: 404 }
+    );
   }
   return NextResponse.json(latest[region]);
 }

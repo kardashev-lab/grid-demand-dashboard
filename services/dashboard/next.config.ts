@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const config: NextConfig = {
-  output: "standalone",
+
   // Pin explicitly: this app lives nested under services/dashboard, and Next's root
   // inference can pick the wrong directory (e.g. a lockfile elsewhere on the machine),
   // which puts .next/standalone/server.js at the wrong path.

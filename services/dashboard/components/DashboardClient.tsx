@@ -178,7 +178,9 @@ export default function DashboardClient({ initialDemand, initialHistory }: Props
           <a href="https://www.eia.gov/opendata/" target="_blank" rel="noopener noreferrer">EIA Open Data</a>
           {' · '}
           <a href="https://kardashevlabs.org" target="_blank" rel="noopener noreferrer">Kardashev Labs</a>
-          {' · '}Use this data in Python:{' '}
+          {' · '}
+          <a href="https://docs.kardashevlabs.org" target="_blank" rel="noopener noreferrer">Docs</a>
+          {' · '}
           <a href="https://pypi.org/project/kardashev/" target="_blank" rel="noopener noreferrer">pip install kardashev</a>
         </p>
       </footer>

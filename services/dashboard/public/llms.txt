@@ -1,32 +1,30 @@
 # US Grid Demand Dashboard
 
-> A free tool from Kardashev Labs showing real-time and forecast US electricity demand across 15 balancing authorities, covering approximately 95% of the continental United States (CONUS).
+> Live and recent US electricity demand across 15 balancing authorities (~95% of CONUS), from EIA Open Data via kardashev-data.
 
-The dashboard visualizes live and historical electricity demand (load) reported by US balancing authorities and ISOs, sourced from the EIA Open Data API via the kardashev-data platform. It is intended for anyone tracking grid load patterns: analysts, researchers, energy traders, and engineers.
+Part of [Kardashev Labs](https://kardashevlabs.org).
 
-## What the data means
+## Terms
 
-- **Demand / load**: The amount of electricity (megawatts) being consumed on a balancing authority's system at a given hour.
-- **Balancing authority**: A regional entity responsible for matching electricity supply and demand in real time (e.g., CAISO, ERCOT, PJM, MISO).
-- **Forecast demand**: Day-ahead or short-term load forecasts published by the balancing authority or EIA, shown alongside actuals for comparison.
-- **CONUS coverage**: The dashboard's 15 tracked balancing authorities collectively represent roughly 95% of continental US electricity demand.
+- **Demand / load**: MW consumed on a BA system in a given hour
+- **Balancing authority**: entity matching supply and demand in real time (CAISO, ERCOT, PJM, …)
+- **Forecast demand**: day-ahead or short-term load forecast shown next to actuals when available
 
 ## Coverage
 
-15 US balancing authorities including CAISO, ERCOT, PJM, MISO, SPP, NYISO, ISO-NE, and others, refreshed on an hourly cadence from EIA data.
+15 BAs including CAISO, ERCOT, PJM, MISO, SPP, NYISO, ISO-NE, and others. Hourly EIA cadence.
 
-## Key facts
+## Related
 
-- Free and open source
-- Source code: https://github.com/kardashev-lab
-- Part of Kardashev Labs: https://kardashevlabs.org
-- Data source: EIA Open Data API (https://www.eia.gov/opendata/), served via kardashev-data (https://data.kardashevlabs.org)
+- https://docs.kardashevlabs.org
+- https://pypi.org/project/kardashev/
+- https://data.kardashevlabs.org
+- https://kardashevlabs.org
+- EIA Open Data: https://www.eia.gov/opendata/
+
+## Facts
+
+- Free / open source
+- Code: https://github.com/kardashev-lab/grid-demand-dashboard
+- Site: https://grid-demand.kardashevlabs.org
 - Contact: ashutosh@kardashevlabs.org
-
-## Architecture note
-
-This dashboard is server-rendered (Next.js): the current demand reading for every balancing authority is present as plain text in the initial HTML response, so crawlers and AI agents that don't execute JavaScript still see real, current numbers -- not just a static shell.
-
-## About Kardashev Labs
-
-Kardashev Labs builds free, open-source tools for US energy grid intelligence, accelerating humanity toward Kardashev Type I by making grid data universally accessible.
