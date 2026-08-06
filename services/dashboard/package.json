@@ -8,14 +8,16 @@
     "start": "next start"
   },
   "dependencies": {
+    "d3-hierarchy": "^3.1.2",
+    "kardashev-charts": "github:kardashev-lab/kardashev-charts#main",
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-simple-maps": "^3.0.0",
-    "recharts": "^2.12.0",
     "swr": "^2.4.2"
   },
   "devDependencies": {
+    "@types/d3-hierarchy": "^3.1.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

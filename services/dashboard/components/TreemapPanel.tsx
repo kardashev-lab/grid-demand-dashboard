@@ -1,6 +1,13 @@
 // magnitude treemap - tile area is proportional to current MW, click to select.
 
-import { Treemap, ResponsiveContainer } from 'recharts';
+import { useMemo } from "react";
+import {
+  hierarchy,
+  treemap,
+  treemapSquarify,
+  type HierarchyRectangularNode,
+} from "d3-hierarchy";
+import { ChartFrame } from "kardashev-charts";
 import type { DemandMap } from "@/lib/types";
 import { REGION_COLORS } from "@/lib/regions";
 
@@ -10,108 +17,136 @@ interface Props {
   onSelect: (region: string) => void;
 }
 
-interface TreemapNode {
+interface Leaf {
   name: string;
   size: number;
   color: string;
 }
 
+type TreeNode = {
+  name: string;
+  size?: number;
+  color?: string;
+  children?: TreeNode[];
+};
+
 export function TreemapPanel({ demand, selected, onSelect }: Props) {
-  // sort descending so the largest BA gets the biggest tile in the top-left
-  const data: TreemapNode[] = Object.entries(demand)
+  const leaves: Leaf[] = Object.entries(demand)
     .map(([region, r]) => ({
       name: region,
       size: r.value,
-      color: REGION_COLORS[region] ?? '#6b7280',
+      color: REGION_COLORS[region] ?? "#6b7280",
     }))
     .sort((a, b) => b.size - a.size);
 
   return (
     <div className="treemap-wrap">
-      <ResponsiveContainer width="100%" height={300}>
-        <Treemap
-          data={data}
-          dataKey="size"
-          stroke="#0a0f1e"
-          aspectRatio={4 / 3}
-          isAnimationActive={false}
-          // custom tile so we control fill, label, and click behaviour
-          content={
-            ((p: TileProps) => (
-              <Tile
-                {...p}
-                selected={selected}
-                onSelect={onSelect}
-              />
-            )) as unknown as React.ReactElement
-          }
-        />
-      </ResponsiveContainer>
+      <ChartFrame height={300} theme="substation" minWidth={60}>
+        {(size) => (
+          <TreemapInner
+            leaves={leaves}
+            width={size.width}
+            height={size.height}
+            selected={selected}
+            onSelect={onSelect}
+          />
+        )}
+      </ChartFrame>
     </div>
   );
 }
 
-interface TileProps {
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-  name?: string;
-  size?: number;
-  color?: string;
-  index?: number;
-  depth?: number;
-  selected?: string | null;
-  onSelect?: (region: string) => void;
-}
+function TreemapInner({
+  leaves,
+  width,
+  height,
+  selected,
+  onSelect,
+}: {
+  leaves: Leaf[];
+  width: number;
+  height: number;
+  selected: string | null;
+  onSelect: (region: string) => void;
+}) {
+  const nodes = useMemo(() => {
+    const rootData: TreeNode = {
+      name: "root",
+      children: leaves.map((l) => ({
+        name: l.name,
+        size: l.size,
+        color: l.color,
+      })),
+    };
 
-function Tile(props: TileProps) {
-  const { x = 0, y = 0, width = 0, height = 0, name, size, color, depth, selected, onSelect } = props;
-  // recharts renders a root node at depth 0 that wraps everything, skip it
-  if (depth === 0 || !name || !size) return <g />;
+    const root = hierarchy(rootData)
+      .sum((d) => d.size ?? 0)
+      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
-  const isSelected = selected === name;
-  // only show text if the tile is big enough, tiny tiles get unreadable fast
-  const showLabel = width > 56 && height > 28;
-  const showValue = width > 80 && height > 48;
+    treemap<TreeNode>()
+      .tile(treemapSquarify.ratio(4 / 3))
+      .size([width, height])
+      .paddingInner(1)(root);
+
+    return root.leaves() as HierarchyRectangularNode<TreeNode>[];
+  }, [leaves, width, height]);
 
   return (
-    <g style={{ cursor: 'pointer' }} onClick={() => onSelect && onSelect(name)}>
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        style={{
-          fill: color,
-          fillOpacity: isSelected ? 1 : 0.78,
-          stroke: isSelected ? '#f8fafc' : '#0a0f1e',
-          strokeWidth: isSelected ? 2 : 1,
-        }}
-      />
-      {showLabel && (
-        <text
-          x={x + 10}
-          y={y + 20}
-          fill="#0a0f1e"
-          fontWeight={700}
-          fontSize={Math.min(15, Math.max(11, width / 9))}
-          style={{ pointerEvents: 'none' }}
-        >
-          {name}
-        </text>
-      )}
-      {showValue && (
-        <text
-          x={x + 10}
-          y={y + 38}
-          fill="rgba(10,15,30,0.7)"
-          fontSize={11}
-          style={{ pointerEvents: 'none' }}
-        >
-          {size.toLocaleString()} MW
-        </text>
-      )}
-    </g>
+    <svg width={width} height={height}>
+      {nodes.map((node) => {
+        const d = node.data;
+        if (!d.name || d.size == null) return null;
+        const x = node.x0;
+        const y = node.y0;
+        const w = node.x1 - node.x0;
+        const h = node.y1 - node.y0;
+        const isSelected = selected === d.name;
+        const showLabel = w > 56 && h > 28;
+        const showValue = w > 80 && h > 48;
+        return (
+          <g
+            key={d.name}
+            style={{ cursor: "pointer" }}
+            onClick={() => onSelect(d.name)}
+          >
+            <rect
+              x={x}
+              y={y}
+              width={w}
+              height={h}
+              style={{
+                fill: d.color ?? "#6b7280",
+                fillOpacity: isSelected ? 1 : 0.78,
+                stroke: isSelected ? "#f8fafc" : "#0a0f1e",
+                strokeWidth: isSelected ? 2 : 1,
+              }}
+            />
+            {showLabel && (
+              <text
+                x={x + 10}
+                y={y + 20}
+                fill="#0a0f1e"
+                fontWeight={700}
+                fontSize={Math.min(15, Math.max(11, w / 9))}
+                style={{ pointerEvents: "none" }}
+              >
+                {d.name}
+              </text>
+            )}
+            {showValue && (
+              <text
+                x={x + 10}
+                y={y + 38}
+                fill="rgba(10,15,30,0.7)"
+                fontSize={11}
+                style={{ pointerEvents: "none" }}
+              >
+                {d.size.toLocaleString()} MW
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
   );
 }

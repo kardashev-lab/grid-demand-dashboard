@@ -7,7 +7,10 @@ const config: NextConfig = {
   // inference can pick the wrong directory (e.g. a lockfile elsewhere on the machine),
   // which puts .next/standalone/server.js at the wrong path.
   outputFileTracingRoot: path.join(__dirname),
-  transpilePackages: ["react-simple-maps"],
+  transpilePackages: ["react-simple-maps", "kardashev-charts"],
+  turbopack: {
+    root: path.join(__dirname),
+  },
   async headers() {
     return [
       {
