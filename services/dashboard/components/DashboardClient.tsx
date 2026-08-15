@@ -99,7 +99,7 @@ export default function DashboardClient({ initialDemand, initialHistory }: Props
               <div className="panel-head">
                 <div>
                   <h2>Magnitude</h2>
-                  <p className="panel-sub">Tile area is proportional to current load. Click any tile.</p>
+                  <p className="panel-sub">Tile area is proportional to current Demand. Click any tile.</p>
                 </div>
               </div>
               <TreemapPanel demand={demandMap} selected={selected} onSelect={setSelected} />

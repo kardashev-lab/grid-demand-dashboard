@@ -99,7 +99,7 @@ export function GridHero({ demand, history, lastUpdated, connected }: Props) {
               US Grid <span className="grid-hero__accent">Demand</span>
             </h1>
             <p className="grid-hero__sub">
-              Real-time electricity load across CAISO, ERCOT, PJM, MISO, and 11 more balancing authorities.
+              Real-time electricity Demand across CAISO, ERCOT, PJM, MISO, and 11 more Balancing Authorities.
               Waiting for data…
             </p>
           </>

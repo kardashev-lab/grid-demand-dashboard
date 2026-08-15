@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   description:
     "Live US electricity demand across 15 balancing authorities, hourly data from the EIA Open Data API.",
   keywords: [
-    "electricity demand", "grid load", "balancing authority", "EIA data",
+    "electricity demand", "Demand", "balancing authority", "EIA data",
     "CAISO", "ERCOT", "PJM", "MISO", "Kardashev Labs",
   ],
   alternates: {
@@ -60,7 +60,7 @@ const jsonLd = {
       },
       keywords: [
         "electricity demand",
-        "grid load",
+        "Demand",
         "balancing authority",
         "EIA data",
         "CAISO",
