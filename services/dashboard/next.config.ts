@@ -1,15 +1,12 @@
 import type { NextConfig } from "next";
-import path from "path";
 
 const config: NextConfig = {
 
-  // Pin explicitly: this app lives nested under services/dashboard, and Next's root
-  // inference can pick the wrong directory (e.g. a lockfile elsewhere on the machine),
-  // which puts .next/standalone/server.js at the wrong path.
-  outputFileTracingRoot: path.join(__dirname),
+  // Vercel Root Directory is services/dashboard, so cwd is this app. Pinning
+  // __dirname as outputFileTracingRoot made Next look for .next at the repo root.
   transpilePackages: ["react-simple-maps", "kardashev-charts"],
   turbopack: {
-    root: path.join(__dirname),
+    root: process.cwd(),
   },
   async headers() {
     return [
