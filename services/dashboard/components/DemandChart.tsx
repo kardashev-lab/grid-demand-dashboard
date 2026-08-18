@@ -17,17 +17,15 @@ interface Props {
   regions?: string[];
 }
 
-type ChartPoint = Record<string, string | number>;
-
-function bucketLabel(timestamp: string): string {
-  const d = new Date(timestamp);
+function tickLabel(ts: number): string {
+  const d = new Date(ts);
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${d.getMonth() + 1}/${d.getDate()} ${hh}:${mm}`;
 }
 
-function fullLabel(timestamp: string): string {
-  return new Date(timestamp).toLocaleString([], {
+function fullLabel(ts: number): string {
+  return new Date(ts).toLocaleString([], {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -39,32 +37,15 @@ function fullLabel(timestamp: string): string {
 export function DemandChart({ history, regions }: Props) {
   const visible = regions ?? Object.keys(history);
 
-  const { data, labels } = useMemo(() => {
-    const visibleSet = new Set(visible);
-    const ordered: { sortKey: number; label: string; full: string }[] = [];
-    const seen = new Map<string, ChartPoint>();
-
-    for (const [region, readings] of Object.entries(history)) {
-      if (!visibleSet.has(region)) continue;
-      for (const r of readings) {
-        const sortKey = new Date(r.timestamp).getTime();
-        const label = bucketLabel(r.timestamp);
-        let point = seen.get(label);
-        if (!point) {
-          point = { time: label, _full: fullLabel(r.timestamp) };
-          seen.set(label, point);
-          ordered.push({ sortKey, label, full: point._full as string });
-        }
-        point[region] = r.value;
-      }
-    }
-
-    ordered.sort((a, b) => a.sortKey - b.sortKey);
-    const data = ordered.map((o) => seen.get(o.label)!).slice(-288);
-    return { data, labels: visible };
+  const seriesReadings = useMemo(() => {
+    return visible.map((region) => ({
+      region,
+      color: REGION_COLORS[region] ?? "#6b7280",
+      readings: history[region] ?? [],
+    }));
   }, [history, visible]);
 
-  if (!data.length) {
+  if (!seriesReadings.some((s) => s.readings.length > 0)) {
     return <div className="chart-wrap" style={{ height: 300 }} />;
   }
 
@@ -72,7 +53,7 @@ export function DemandChart({ history, regions }: Props) {
     <div className="chart-wrap">
       <ChartFrame height={300} theme="substation" minWidth={60}>
         {(size) => (
-          <DemandInner data={data} labels={labels} width={size.width} height={size.height} />
+          <DemandInner series={seriesReadings} width={size.width} height={size.height} />
         )}
       </ChartFrame>
       <div
@@ -85,7 +66,7 @@ export function DemandChart({ history, regions }: Props) {
           color: "rgba(255,255,255,0.35)",
         }}
       >
-        {labels.map((r) => (
+        {visible.map((r) => (
           <span key={r} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
             <span style={{ width: 12, height: 2, background: REGION_COLORS[r] ?? "#6b7280" }} />
             {r}
@@ -96,29 +77,29 @@ export function DemandChart({ history, regions }: Props) {
   );
 }
 
+const CHART_PADDING = { top: 4, right: 16, bottom: 28, left: 42 };
+
 function DemandInner({
-  data,
-  labels,
+  series,
   width,
   height,
 }: {
-  data: ChartPoint[];
-  labels: string[];
+  series: Array<{ region: string; color: string; readings: { value: number; timestamp: string }[] }>;
   width: number;
   height: number;
 }) {
   const [hover, setHover] = useState<number | null>(null);
-  const padding = { top: 4, right: 16, bottom: 28, left: 42 };
+  const padding = CHART_PADDING;
 
-  const { scales, xs, series, yTicks, xTicks } = useMemo(() => {
-    const n = data.length;
-    const vals: number[] = [];
-    for (const d of data) {
-      for (const r of labels) {
-        const v = d[r];
-        if (typeof v === "number") vals.push(v);
-      }
-    }
+  const { scales, xs, times, drawn, yTicks, xTicks } = useMemo(() => {
+    const times = Array.from(
+      new Set(
+        series.flatMap((s) => s.readings.map((r) => Date.parse(r.timestamp)))
+      )
+    ).sort((a, b) => a - b);
+    const vals = series.flatMap((s) => s.readings.map((r) => r.value));
+    const t0 = times[0] ?? Date.now();
+    const t1 = times[times.length - 1] ?? t0 + 1;
     const [lo, hi] = padDomain(
       vals.length ? Math.min(...vals) : 0,
       vals.length ? Math.max(...vals) : 1,
@@ -127,37 +108,37 @@ function DemandInner({
     const scales = createLinearScales({
       width,
       height,
-      xDomain: [0, Math.max(n - 1, 1)],
+      xDomain: [t0, t1],
       yDomain: [lo, hi],
       padding,
     });
-    const xs = data.map((_, i) => scales.x(i));
-    const series = labels.map((r) => ({
-      key: r,
-      color: REGION_COLORS[r] ?? "#6b7280",
-      points: data.map((d, i) => ({
-        x: scales.x(i),
-        y: typeof d[r] === "number" ? scales.y(d[r] as number) : null,
+    const xs = times.map((t) => scales.x(t));
+    const drawn = series.map((s) => ({
+      key: s.region,
+      color: s.color,
+      points: s.readings.map((r) => ({
+        x: scales.x(Date.parse(r.timestamp)),
+        y: scales.y(r.value),
       })),
     }));
-    const tickCount = Math.min(12, n);
+    const tickCount = Math.min(8, Math.max(2, times.length));
     const xTicks = Array.from({ length: tickCount }, (_, i) => {
-      const idx = tickCount === 1 ? 0 : Math.round((i / (tickCount - 1)) * (n - 1));
-      return { value: idx, label: String(data[idx].time) };
+      const t = t0 + (i / (tickCount - 1)) * (t1 - t0);
+      return { value: t, label: tickLabel(t) };
     });
     const formatY = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(Math.round(v)));
     const yTicks = [lo, (lo + hi) / 2, hi].map((v) => ({
       value: v,
       label: formatY(v),
     }));
-    return { scales, xs, series, yTicks, xTicks };
-  }, [data, labels, width, height]);
+    return { scales, xs, times, drawn, yTicks, xTicks };
+  }, [series, width, height]);
 
   const onMove = (e: MouseEvent<SVGSVGElement>) => {
     setHover(closestIndex(xs, clientToViewBoxX(e.currentTarget, e.clientX, width)));
   };
 
-  const h = hover != null ? data[hover] : null;
+  const hoverT = hover != null ? times[hover] : null;
   const hx = hover != null ? xs[hover] : null;
 
   return (
@@ -174,7 +155,7 @@ function DemandInner({
           yTicks={yTicks}
           showGrid
         />
-        {series.map((s) => (
+        {drawn.map((s) => (
           <LineSeries
             key={s.key}
             points={s.points}
@@ -193,7 +174,7 @@ function DemandInner({
           />
         )}
       </svg>
-      {h && hx != null && (
+      {hoverT != null && hx != null && (
         <div style={{ position: "absolute", left: Math.min(hx + 8, width - 180), top: 8 }}>
           <ChartTooltip
             theme="substation"
@@ -204,15 +185,15 @@ function DemandInner({
             }}
           >
             <div style={{ marginBottom: 6, color: "rgba(255,255,255,0.5)" }}>
-              {String(h._full)}
+              {fullLabel(hoverT)}
             </div>
-            {labels.map((r) => {
-              const v = h[r];
-              if (typeof v !== "number") return null;
+            {series.map((s) => {
+              const v = nearestValue(s.readings, hoverT, 15 * 60_000);
+              if (v == null) return null;
               return (
-                <div key={r} style={{ display: "flex", gap: 8, marginBottom: 2 }}>
-                  <span style={{ width: 8, height: 2, background: REGION_COLORS[r] ?? "#6b7280", marginTop: 7 }} />
-                  <span style={{ color: "rgba(255,255,255,0.55)", minWidth: 48 }}>{r}</span>
+                <div key={s.region} style={{ display: "flex", gap: 8, marginBottom: 2 }}>
+                  <span style={{ width: 8, height: 2, background: s.color, marginTop: 7 }} />
+                  <span style={{ color: "rgba(255,255,255,0.55)", minWidth: 48 }}>{s.region}</span>
                   <span>{v.toLocaleString()} MW</span>
                 </div>
               );
@@ -222,4 +203,21 @@ function DemandInner({
       )}
     </div>
   );
+}
+
+function nearestValue(
+  readings: Array<{ value: number; timestamp: string }>,
+  t: number,
+  maxDt: number
+): number | null {
+  let best: number | null = null;
+  let bestDt = Infinity;
+  for (const r of readings) {
+    const dt = Math.abs(Date.parse(r.timestamp) - t);
+    if (dt < bestDt) {
+      bestDt = dt;
+      best = r.value;
+    }
+  }
+  return bestDt <= maxDt ? best : null;
 }

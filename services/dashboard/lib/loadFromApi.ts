@@ -2,7 +2,7 @@
 // Used on Vercel (no long-lived in-memory poller). Railway can still warm
 // the in-process store via instrumentation.ts -> poller.ts.
 
-import { toDemandReadings, type LoadPoint } from "./demandReadings";
+import { loadQueryUrl, toDemandReadings, type LoadPoint } from "./demandReadings";
 import { REGIONS } from "./regions";
 import type { DemandReading } from "./types";
 
@@ -12,8 +12,7 @@ const KARDASHEV_API = (
 const BACKFILL_HOURS = parseInt(process.env.BACKFILL_HOURS ?? "48", 10);
 
 async function fetchRegion(iso: string, hours: number): Promise<LoadPoint[]> {
-  const limit = hours * 15;
-  const url = `${KARDASHEV_API}/load?iso=${iso}&hours=${hours}&limit=${limit}`;
+  const url = loadQueryUrl(KARDASHEV_API, iso, hours);
   const res = await fetch(url, {
     signal: AbortSignal.timeout(15000),
     cache: "no-store",

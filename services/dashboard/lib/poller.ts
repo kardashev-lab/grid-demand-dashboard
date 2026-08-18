@@ -2,7 +2,7 @@
 // every POLL_INTERVAL after that. Started once from instrumentation.ts when the
 // server boots.
 
-import { toDemandReadings, type LoadPoint } from "./demandReadings";
+import { loadQueryUrl, toDemandReadings, type LoadPoint } from "./demandReadings";
 import { REGIONS } from "./regions";
 import { hydrate, updateDemand } from "./store";
 import type { DemandReading } from "./types";
@@ -12,9 +12,7 @@ const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL ?? "300000", 10); // 5 
 const BACKFILL_HOURS = parseInt(process.env.BACKFILL_HOURS ?? "48", 10);
 
 async function fetchRegion(iso: string, hours: number): Promise<LoadPoint[]> {
-  // limit = hours * 15 to handle 5-min resolution (12 per hour + headroom)
-  const limit = hours * 15;
-  const url = `${KARDASHEV_API}/load?iso=${iso}&hours=${hours}&limit=${limit}`;
+  const url = loadQueryUrl(KARDASHEV_API.replace(/\/$/, ""), iso, hours);
   const res = await fetch(url, { signal: AbortSignal.timeout(15000), cache: "no-store" });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${iso}`);
   return res.json() as Promise<LoadPoint[]>;
