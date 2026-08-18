@@ -1,7 +1,8 @@
 // detail view for the selected BA: current MW, hour-over-hour delta, sparkline.
 
-import type { DemandReading } from "@/lib/types";
+import { historySpanHours } from "@/lib/demandReadings";
 import { REGION_COLORS, REGION_LABELS } from "@/lib/regions";
+import type { DemandReading } from "@/lib/types";
 import { Sparkline } from "./Sparkline";
 
 interface Props {
@@ -67,7 +68,7 @@ export function DetailPanel({ region, data, history }: Props) {
           {history && history.length >= 2 && (
             <div className="detail-spark">
               <div className="detail-spark-meta">
-                <span>Last {history.length} hours</span>
+                <span>Last {historySpanHours(history)} hours</span>
                 {min !== null && max !== null && (
                   <span>
                     {min.toLocaleString()} - {max.toLocaleString()} MW

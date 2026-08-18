@@ -2,6 +2,7 @@
 // every POLL_INTERVAL after that. Started once from instrumentation.ts when the
 // server boots.
 
+import { toDemandReadings, type LoadPoint } from "./demandReadings";
 import { REGIONS } from "./regions";
 import { hydrate, updateDemand } from "./store";
 import type { DemandReading } from "./types";
@@ -9,14 +10,6 @@ import type { DemandReading } from "./types";
 const KARDASHEV_API = process.env.KARDASHEV_API_URL ?? "https://data.kardashevlabs.org";
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL ?? "300000", 10); // 5 min
 const BACKFILL_HOURS = parseInt(process.env.BACKFILL_HOURS ?? "48", 10);
-
-interface LoadPoint {
-  ts: string;
-  iso: string;
-  zone: string;
-  mw_actual: number | null;
-  mw_forecast: number | null;
-}
 
 async function fetchRegion(iso: string, hours: number): Promise<LoadPoint[]> {
   // limit = hours * 15 to handle 5-min resolution (12 per hour + headroom)
@@ -27,25 +20,13 @@ async function fetchRegion(iso: string, hours: number): Promise<LoadPoint[]> {
   return res.json() as Promise<LoadPoint[]>;
 }
 
-function toReadings(iso: string, rows: LoadPoint[]): DemandReading[] {
-  return rows
-    .filter((r) => r.mw_actual && r.mw_actual > 0)
-    .map((r) => ({
-      region: iso,
-      value: Math.round(r.mw_actual!),
-      unit: "MW",
-      timestamp: new Date(r.ts).toISOString(),
-    }))
-    .reverse(); // kardashev returns DESC; store expects ASC
-}
-
 async function backfillAll(): Promise<void> {
   const byRegion: Record<string, DemandReading[]> = {};
   await Promise.allSettled(
     REGIONS.map(async (iso) => {
       try {
         const rows = await fetchRegion(iso, BACKFILL_HOURS);
-        byRegion[iso] = toReadings(iso, rows);
+        byRegion[iso] = toDemandReadings(iso, rows);
         console.log(`[poller] Backfilled ${iso}: ${byRegion[iso].length} rows`);
       } catch (err) {
         console.error(`[poller] Backfill ${iso}:`, (err as Error).message);
@@ -60,7 +41,7 @@ async function pollAll(): Promise<void> {
     REGIONS.map(async (iso) => {
       try {
         const rows = await fetchRegion(iso, 3);
-        const readings = toReadings(iso, rows);
+        const readings = toDemandReadings(iso, rows);
         if (readings.length > 0) {
           const latest = readings[readings.length - 1];
           updateDemand(latest);
